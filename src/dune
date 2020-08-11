@@ -1,0 +1,13 @@
+(library (name hardcaml_verify) (public_name hardcaml_verify)
+ (libraries base hardcaml re hardcaml_waveterm stdio)
+ (preprocess (pps ppx_jane)))
+
+(rule (targets config.ml) (deps)
+ (action
+  (bash
+    "cat <<EOF > config.ml\
+   \nlet minisat = \"minisat\"\
+   \nlet picosat = \"picosat\"\
+   \nlet z3 = \"z3\"\
+   \nlet nusmv = \"NuSMV\"\
+   \nEOF")))

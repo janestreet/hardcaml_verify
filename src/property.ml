@@ -56,7 +56,9 @@ module CTL = struct
   let ag s = a @@ g s
   let eg s = e @@ g s
 
-  let rec to_string ?(name = name) = function
+  let rec to_string ?(name = name) p =
+    let to_string = to_string ~name in
+    match p with
     | True -> "TRUE"
     | P ap -> name ap
     | And (a, b) -> "(" ^ to_string a ^ " & " ^ to_string b ^ ")"
@@ -147,6 +149,7 @@ module LTL = struct
   let w p q = u p q |: g p
 
   let rec to_string ?(name = name) p =
+    let to_string = to_string ~name in
     match p with
     | U (True, b) -> "(F " ^ to_string b ^ ")"
     | Not (U (True, Not p)) -> "(G " ^ to_string p ^ ")"
@@ -158,8 +161,8 @@ module LTL = struct
     | Not a -> "(!" ^ to_string a ^ ")"
     | X p -> "(X " ^ to_string p ^ ")"
     | U (a, b) -> "(" ^ to_string a ^ " U " ^ to_string b ^ ")"
-    | R (a, b) ->
-      "(" ^ to_string a ^ " V " ^ to_string b ^ ")" (* XXX I think? weak release? *)
+    | R (a, b) -> "(" ^ to_string a ^ " V " ^ to_string b ^ ")"
+    (* XXX I think? weak release? *)
     | F p -> "(F " ^ to_string p ^ ")"
     | G p -> "(G " ^ to_string p ^ ")"
   ;;

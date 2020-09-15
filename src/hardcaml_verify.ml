@@ -5,7 +5,6 @@ module Dimacs = Dimacs
 module Is_one_hot = Is_one_hot
 module Label = Label
 module Nusmv = Nusmv
-module Property = Property
 module Sat = Sat
 module Solver = Solver
 module Tseitin = Tseitin

@@ -28,10 +28,9 @@ val circuit : t -> Circuit.t
 val write : Stdio.Out_channel.t -> t -> unit
 
 module Counter_example_trace : sig
-  type nusmv := t
   type t [@@deriving sexp_of]
 
-  val to_waveform : nusmv -> t -> Hardcaml_waveterm.Waveform.t
+  val to_trace : t -> (string * Bits.t) list list
 end
 
 module Proof_result : sig

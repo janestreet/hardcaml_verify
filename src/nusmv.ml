@@ -1,7 +1,6 @@
 open Base
 open Hardcaml
 open Signal
-open Hardcaml_waveterm
 
 type property =
   | LTL of Property.LTL.path
@@ -277,67 +276,7 @@ let write chan { circuit = circ; properties = props; atomic_propositions_map } =
 module Counter_example_trace = struct
   type t = { states : (string * Bits.t) list list } [@@deriving sexp_of]
 
-  let to_waveform nusmv { states } =
-    let data_map =
-      match states with
-      | hd :: tl ->
-        let buffer_map =
-          Map.of_alist_exn (module String) hd
-          |> Map.map ~f:(fun bits ->
-            let data = Data.create (Bits.width bits) in
-            Data.set data 0 bits;
-            data)
-        in
-        List.iteri tl ~f:(fun index_minus_one state_map ->
-          let index = index_minus_one + 1 in
-          let state_map = Map.of_alist_exn (module String) state_map in
-          Map.iteri buffer_map ~f:(fun ~key ~data ->
-            let bits =
-              (* Check if this state has a new value for each variable *)
-              match Map.find state_map key with
-              | Some bits -> bits
-              | None -> Data.get data (index - 1)
-            in
-            Data.set data index bits));
-        buffer_map
-      | [] -> raise_s [%message "Cannot visualize an empty counter example trace!"]
-    in
-    let signals_to_names signals =
-      signals
-      |> List.filter ~f:(fun s -> not (Signal.is_empty s))
-      |> List.concat_map ~f:Signal.names
-      |> Set.of_list (module String)
-    in
-    let input_names = Circuit.inputs nusmv.circuit |> signals_to_names in
-    let output_names = Circuit.outputs nusmv.circuit |> signals_to_names in
-    let all_names = Circuit.signal_map nusmv.circuit |> Map.data |> signals_to_names in
-    let waves_and_ports =
-      Map.to_alist data_map
-      |> List.filter ~f:(fun (name, _) -> not (String.is_prefix name ~prefix:"_"))
-      |> List.filter ~f:(fun (name, _) -> Set.mem all_names name)
-      |> List.map ~f:(fun (name, data) ->
-        let width = Bits.width (Data.get data 0) in
-        let wave =
-          match width with
-          | 1 -> Wave.Binary (name, data)
-          | _ -> Wave.Data (name, data, Wave_format.Hex, Wave_format.Left)
-        in
-        let port =
-          let type_ =
-            if Set.mem input_names name
-            then Port.Type.Input
-            else if Set.mem output_names name
-            then Port.Type.Output
-            else Port.Type.Internal
-            (* We already filtered to ensure it's in all_names *)
-          in
-          { Port.type_; port_name = Port_name.of_string name; width }
-        in
-        wave, port)
-    in
-    let waves, ports = List.unzip waves_and_ports in
-    Waveform.create_from_data ~waves ~ports
-  ;;
+  let to_trace t = t.states
 end
 
 module Proof_result = struct

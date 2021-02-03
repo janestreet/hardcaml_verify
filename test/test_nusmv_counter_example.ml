@@ -108,7 +108,7 @@ let%expect_test "example NuSMV failure trace" =
     | Nusmv.Proof_result.Tautology -> Stdio.print_endline "Tautology"
     | Nusmv.Proof_result.Exists_counter_example cet ->
       let waveform = Nusmv.Counter_example_trace.to_waveform model cet in
-      Hardcaml_waveterm.Waveform.print waveform);
+      Hardcaml_waveterm.Waveform.expect waveform);
   [%expect
     {|
     (proofs
@@ -156,6 +156,7 @@ let%expect_test "example NuSMV failure trace" =
     │               ││                                                   │
     │               ││                                                   │
     └───────────────┘└───────────────────────────────────────────────────┘
+    334c4a4c42fdb79d7ebc3e73b517e6f8
     ┌Signals────────┐┌Waves──────────────────────────────────────────────┐
     │clock          ││                                                   │
     │               ││────────────────────────                           │
@@ -175,5 +176,6 @@ let%expect_test "example NuSMV failure trace" =
     │               ││                                                   │
     │               ││                                                   │
     │               ││                                                   │
-    └───────────────┘└───────────────────────────────────────────────────┘ |}]
+    └───────────────┘└───────────────────────────────────────────────────┘
+    334c4a4c42fdb79d7ebc3e73b517e6f8 |}]
 ;;

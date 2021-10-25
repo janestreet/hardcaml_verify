@@ -6,5 +6,6 @@ module Is_one_hot = Is_one_hot
 module Label = Label
 module Nusmv = Nusmv
 module Sat = Sat
+module Sec = Sec
 module Solver = Solver
 module Tseitin = Tseitin

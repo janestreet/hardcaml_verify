@@ -207,7 +207,7 @@ let test_counter incr =
   let spec = spec () in
   let clear = input "clear" 1 in
   let counter =
-    Signal.reg_fb spec ~w:8 (fun d -> mux2 clear (zero 8) (d +:. incr)) -- "cnt"
+    Signal.reg_fb spec ~width:8 ~f:(fun d -> mux2 clear (zero 8) (d +:. incr)) -- "cnt"
   in
   Circuit.create_exn ~name:"foo" [ output "counter" counter ]
 ;;

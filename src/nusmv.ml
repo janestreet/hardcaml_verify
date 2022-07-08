@@ -458,8 +458,12 @@ module With_interface (I : Hardcaml.Interface.S) (O : Hardcaml.Interface.S) = st
   let create ~name create =
     let module C = Hardcaml.Circuit.With_interface (I) (O) in
     let circuit = C.create_exn ~name create in
-    let inputs = I.of_alist (to_alist (Hardcaml.Circuit.inputs circuit)) in
-    let outputs = O.of_alist (to_alist (Hardcaml.Circuit.outputs circuit)) in
+    let inputs =
+      I.Unsafe_assoc_by_port_name.of_alist (to_alist (Hardcaml.Circuit.inputs circuit))
+    in
+    let outputs =
+      O.Unsafe_assoc_by_port_name.of_alist (to_alist (Hardcaml.Circuit.outputs circuit))
+    in
     { inputs; outputs; circuit }
   ;;
 

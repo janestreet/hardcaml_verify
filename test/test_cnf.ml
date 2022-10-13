@@ -46,21 +46,24 @@ let%expect_test "show data structure" =
   [%expect
     {|
     (cnf (
-      (input_bits (a/0/1 a/1/1 b/0/2))
+      (input_bits (
+        (a 0 1 false)
+        (a 1 1 false)
+        (b 0 2 false)))
       (input_map (
-        (1 a/0/1)
-        (2 a/1/1)
-        (3 b/0/2)))
+        (1 (a 0 1 false))
+        (2 (a 1 1 false))
+        (3 (b 0 2 false))))
       (int_map (
-        (a/0/1 1)
-        (a/1/1 2)
-        (b/0/2 3)))
+        ((a 0 1 false) 1)
+        ((a 1 1 false) 2)
+        ((b 0 2 false) 3)))
       (conjunction (
-        ((P a/0/1)
-         (P a/1/1)
-         (N b/0/2))
-        ((N a/1/1)
-         (P b/0/2))))
+        ((P (a 0 1 false))
+         (P (a 1 1 false))
+         (N (b 0 2 false)))
+        ((N (a 1 1 false))
+         (P (b 0 2 false)))))
       (number_of_variables 3)
       (number_of_clauses   2))) |}]
 ;;

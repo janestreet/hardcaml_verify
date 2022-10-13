@@ -1,7 +1,7 @@
 open Base
 
 module type S = sig
-  type t [@@deriving sexp_of]
+  type t [@@deriving sexp]
 
   include Comparable.S with type t := t
   include Stringable.S with type t := t

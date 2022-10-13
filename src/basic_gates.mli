@@ -5,10 +5,14 @@
 open Base
 module Uid : Uid.S
 
-type t [@@deriving compare, sexp_of]
+type t [@@deriving compare, sexp]
 
 include Comparable.S with type t := t
 
+val optimise_muxs : bool
+val constant_only : bool
+val to_char : t -> char
+val of_char : char -> t
 val uid : t -> Uid.t
 val vdd : t
 val gnd : t

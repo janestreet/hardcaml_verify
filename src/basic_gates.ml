@@ -28,11 +28,26 @@ module T = struct
         ; arg1 : t
         ; arg2 : t
         }
-  [@@deriving compare, sexp_of]
+  [@@deriving compare, sexp]
 end
 
 include T
 module Comparable = Comparable.Make (T)
+
+let optimise_muxs = false
+let constant_only = false
+
+let to_char = function
+  | Vdd -> '1'
+  | Gnd -> '0'
+  | c -> raise_s [%message "[Basic_gates.to_char] not a constant" (c : t)]
+;;
+
+let of_char = function
+  | '1' -> Vdd
+  | '0' -> Gnd
+  | c -> raise_s [%message "[Basic_gates.of_char] invalid char" (c : char)]
+;;
 
 let new_uid = Staged.unstage (Uid.create 0)
 let gnd_uid = new_uid ()

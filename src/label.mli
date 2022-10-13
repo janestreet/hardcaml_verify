@@ -9,7 +9,7 @@
 open Base
 module Uid : Uid.S
 
-type t [@@deriving compare, sexp_of]
+type t [@@deriving compare, sexp]
 
 val to_string : t -> string
 

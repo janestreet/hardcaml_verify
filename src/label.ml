@@ -8,7 +8,7 @@ module T = struct
     ; uid : Uid.t
     ; hidden : bool
     }
-  [@@deriving fields]
+  [@@deriving fields, sexp]
 
   let to_string t =
     String.concat ~sep:"/" [ t.name; Int.to_string t.bit_pos; Uid.to_string t.uid ]
@@ -20,7 +20,20 @@ module T = struct
     if uid <> 0 then uid else Int.compare a.bit_pos b.bit_pos
   ;;
 
-  let sexp_of_t t = sexp_of_string (to_string t)
+  module Compact_sexp : sig
+    type s [@@deriving sexp]
+
+    val to_t : s -> t
+    val of_t : t -> s
+  end = struct
+    type s = string * int * Uid.t * bool [@@deriving sexp]
+
+    let of_t t = t.name, t.bit_pos, t.uid, t.hidden
+    let to_t (name, bit_pos, uid, hidden) = { name; bit_pos; uid; hidden }
+  end
+
+  let sexp_of_t t = Compact_sexp.(sexp_of_s (of_t t))
+  let t_of_sexp t = Compact_sexp.(to_t (s_of_sexp t))
 end
 
 include T

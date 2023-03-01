@@ -414,7 +414,7 @@ end
 let nusmv_path = Config.nusmv
 
 let run (t : t) =
-  let tmp_file = Caml.Filename.temp_file "hardcaml_verify_nusmv" "txt" in
+  let tmp_file = Stdlib.Filename.temp_file "hardcaml_verify_nusmv" "txt" in
   let oc = Stdio.Out_channel.create tmp_file in
   write oc t;
   Stdio.Out_channel.close oc;

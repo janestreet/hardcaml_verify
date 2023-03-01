@@ -51,7 +51,7 @@ let z3 ?seed ~parallel () ~dimacs_in ~result_out () =
        ])
 ;;
 
-module Filename = Caml.Filename
+module Filename = Stdlib.Filename
 
 type 'a result = 'a list Sat.t Or_error.t [@@deriving sexp_of]
 

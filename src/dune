@@ -1,5 +1,5 @@
 (library (name hardcaml_verify_kernel) (public_name hardcaml_verify.kernel)
- (libraries base hardcaml re stdio)
+ (libraries base hardcaml re stdio unix)
  (preprocess (pps ppx_deriving_hardcaml ppx_jane)))
 
 (rule (targets config.ml) (deps)

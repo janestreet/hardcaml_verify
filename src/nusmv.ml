@@ -234,9 +234,7 @@ let write chan { circuit = circ; properties = props; atomic_propositions_map } =
             | Low -> mux2 (name s) f t)
         in
         let nxt = mux2e r.reg_enable (name din) (name s) in
-        let nxt =
-          mux2_level r.reg_clear r.reg_clear_level (name r.reg_clear_value) nxt
-        in
+        let nxt = mux2_level r.reg_clear r.reg_clear_level (name r.reg_clear_value) nxt in
         let nxt = mux2_edge r.reg_reset r.reg_reset_edge (name r.reg_reset_value) nxt in
         nxt
       in

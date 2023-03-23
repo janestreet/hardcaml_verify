@@ -191,8 +191,8 @@ module Checkable_circuit = struct
                r.return
                  (Or_error.error_s
                     [%message
-                      "[Sec.create_initial_sat_gates] cannot merge input, register \
-                       and instantiation maps"])
+                      "[Sec.create_initial_sat_gates] cannot merge input, register and \
+                       instantiation maps"])
              | `Left x | `Right x -> Some x)))
     in
     let%bind.Or_error map = merge inputs regs in
@@ -212,8 +212,7 @@ module Checkable_circuit = struct
         | `Duplicate ->
           Or_error.error_s
             [%message
-              "[Sec.compile_sat_gates] failed to add duplicate signal"
-                (signal : Signal.t)]
+              "[Sec.compile_sat_gates] failed to add duplicate signal" (signal : Signal.t)]
       in
       let find signal =
         match Map.find ready (Signal.uid signal) with

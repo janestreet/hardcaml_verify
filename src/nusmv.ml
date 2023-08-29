@@ -12,7 +12,7 @@ type t =
   ; properties : property list
   ; atomic_propositions_map : Signal.t Map.M(Signal.Uid).t
   }
-[@@deriving sexp_of, fields]
+[@@deriving sexp_of, fields ~getters]
 
 let create ?(outputs = []) ~name properties =
   let module Signal_compare = struct
@@ -435,7 +435,7 @@ module Circuit_properties = struct
     { inputs : 'i
     ; outputs : 'o
     }
-  [@@deriving fields]
+  [@@deriving fields ~getters]
 end
 
 module With_interface (I : Hardcaml.Interface.S) (O : Hardcaml.Interface.S) = struct

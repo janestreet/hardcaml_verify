@@ -674,7 +674,7 @@ type t =
   ; register_inputs_propositions : Comb_gates.t named list
   ; instantiation_inputs_propositions : Comb_gates.t named list named list
   }
-[@@deriving sexp_of, fields]
+[@@deriving sexp_of]
 
 module Proposition = struct
   type t = Comb_gates.t [@@deriving sexp_of]

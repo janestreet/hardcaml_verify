@@ -69,7 +69,7 @@ type t =
   ; number_of_variables : int
   ; number_of_clauses : int
   }
-[@@deriving fields, sexp_of]
+[@@deriving fields ~getters, sexp_of]
 
 let ( ~: ) = Literal.( ~: )
 

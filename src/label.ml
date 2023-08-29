@@ -8,7 +8,7 @@ module T = struct
     ; uid : Uid.t
     ; hidden : bool
     }
-  [@@deriving fields, sexp]
+  [@@deriving fields ~getters, sexp]
 
   let to_string t =
     String.concat ~sep:"/" [ t.name; Int.to_string t.bit_pos; Uid.to_string t.uid ]

@@ -17,7 +17,6 @@ open! Hardcaml
    registers must have a unique name, while instantiations are identified by their module
    instance name (not module name). *)
 
-
 module Instantiation_ports_match = struct
   type t =
     | Exactly
@@ -231,15 +230,15 @@ module Checkable_circuit = struct
         let%bind.Or_error arg_b = find arg_b in
         add
           ((match op with
-             | Signal_add -> Comb_gates.( +: )
-             | Signal_sub -> Comb_gates.( -: )
-             | Signal_mulu -> Comb_gates.( *: )
-             | Signal_muls -> Comb_gates.( *+ )
-             | Signal_and -> Comb_gates.( &: )
-             | Signal_or -> Comb_gates.( |: )
-             | Signal_xor -> Comb_gates.( ^: )
-             | Signal_eq -> Comb_gates.( ==: )
-             | Signal_lt -> Comb_gates.( <: ))
+            | Signal_add -> Comb_gates.( +: )
+            | Signal_sub -> Comb_gates.( -: )
+            | Signal_mulu -> Comb_gates.( *: )
+            | Signal_muls -> Comb_gates.( *+ )
+            | Signal_and -> Comb_gates.( &: )
+            | Signal_or -> Comb_gates.( |: )
+            | Signal_xor -> Comb_gates.( ^: )
+            | Signal_eq -> Comb_gates.( ==: )
+            | Signal_lt -> Comb_gates.( <: ))
              arg_a
              arg_b)
       | Mux { signal_id = _; select; cases } ->
@@ -410,7 +409,7 @@ let pair_signals_by_name context (signals : Signal.t list Pair.t) =
        converting one of the designs from verilog. We will do checks on the ports
        themselves. *)
     if Signal.width signal.left.data <> Signal.width signal.right.data
-    && not (Signal.is_inst signal.left.data)
+       && not (Signal.is_inst signal.left.data)
     then
       Or_error.error_s
         [%message
@@ -568,8 +567,8 @@ let build_right_instantiation_pseudo_input (i : Signal.t named) =
 ;;
 
 let rebuild_left_instantiation_pseudo_input_from_right
-      input
-      (insts : Signal.t named Pair.t)
+  input
+  (insts : Signal.t named Pair.t)
   =
   let%bind.Or_error insts =
     Pair.map_or_error insts ~f:(fun i -> instantiation_of_signal i.data)
@@ -753,8 +752,8 @@ let compare_register (circuits : Checkable_circuit.sat Pair.t) (pair : Signal.t 
 ;;
 
 let compare_registers
-      (circuits : Checkable_circuit.sat Pair.t)
-      (regs : Signal.t paired list)
+  (circuits : Checkable_circuit.sat Pair.t)
+  (regs : Signal.t paired list)
   =
   List.map regs ~f:(compare_register circuits) |> Or_error.all
 ;;
@@ -821,7 +820,7 @@ let create ?(instantiation_ports_match : Instantiation_ports_match.t = Exactly) 
       paired_regs.inputs
       paired_instantiations.inputs
       ~f:(fun checkable_circuit inputs registers instantiations ->
-        Checkable_circuit.compile checkable_circuit ~inputs ~registers ~instantiations)
+      Checkable_circuit.compile checkable_circuit ~inputs ~registers ~instantiations)
   in
   (* Build the logical equivalence proposition *)
   let sat_gates = Pair.map compiled_circuits ~f:(fun c -> c.sat_gates) in

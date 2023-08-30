@@ -3,7 +3,6 @@ open Expect_test_helpers_base
 open Hardcaml
 open Hardcaml_verify
 
-
 module Delayed_adder = struct
   open Signal
 

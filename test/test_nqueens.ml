@@ -54,8 +54,8 @@ let nqueens size =
             let pos = Label.bit_pos s.label in
             ( pos
             , match s.value with
-            | '1' -> 'Q'
-            | _ -> '.' ))
+              | '1' -> 'Q'
+              | _ -> '.' ))
         in
         printf "%c" (List.Assoc.find_exn soln ((r * size) + c) ~equal:Int.equal)
       done;

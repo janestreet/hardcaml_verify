@@ -123,11 +123,11 @@ module Make (Comb : Comb.S) = struct
     puzzle
     |> String.to_list
     |> List.mapi ~f:(fun idx c ->
-      if Char.equal c '.'
-      then `input idx
-      else (
-        let v = Char.to_int c - Char.to_int '1' in
-        `const (of_int ~width:9 (1 lsl v))))
+         if Char.equal c '.'
+         then `input idx
+         else (
+           let v = Char.to_int c - Char.to_int '1' in
+           `const (of_int ~width:9 (1 lsl v))))
     |> Array.of_list
   ;;
 
@@ -143,15 +143,15 @@ module Make (Comb : Comb.S) = struct
       in
       String.to_list puzzle
       |> List.mapi ~f:(fun i c ->
-        match c with
-        | '.' ->
-          Char.of_int_exn
-            (Char.to_int '1'
-             + List.Assoc.find_exn
-                 sat_solution
-                 ("v" ^ Int.to_string i)
-                 ~equal:String.equal)
-        | c -> c)
+           match c with
+           | '.' ->
+             Char.of_int_exn
+               (Char.to_int '1'
+                + List.Assoc.find_exn
+                    sat_solution
+                    ("v" ^ Int.to_string i)
+                    ~equal:String.equal)
+           | c -> c)
       |> String.of_char_list
   ;;
 end
@@ -185,8 +185,8 @@ let check puzzle =
   let solution =
     Sudoku_checker.read_puzzle puzzle
     |> Array.map ~f:(function
-      | `const c -> c
-      | `input _ -> raise_s [%message "cant evaluate with inputs"])
+         | `const c -> c
+         | `input _ -> raise_s [%message "cant evaluate with inputs"])
   in
   let solution = Sudoku_checker.create { I.cells = solution } in
   print_s [%message (solution : Bits.t O.t)]
@@ -221,8 +221,8 @@ let solve puzzle =
   let cells =
     Sudoku_checker.read_puzzle puzzle
     |> Array.map ~f:(function
-      | `const c -> c
-      | `input i -> input ("v" ^ Int.to_string i) 9)
+         | `const c -> c
+         | `input i -> input ("v" ^ Int.to_string i) 9)
   in
   let is_valid_solution = (Sudoku_checker.create { I.cells }).O.is_valid_solution in
   let sat = is_valid_solution |> cnf |> Solver.solve in
@@ -295,8 +295,8 @@ let solve_with_input_constraints puzzle =
   let solution =
     Sudoku_checker.read_puzzle puzzle
     |> Array.map ~f:(function
-      | `const c -> `const c
-      | `input i -> `input (input ("v" ^ Int.to_string i) 9))
+         | `const c -> `const c
+         | `input i -> `input (input ("v" ^ Int.to_string i) 9))
   in
   let input_constraints =
     Array.filter_map solution ~f:(function

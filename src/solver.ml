@@ -56,11 +56,11 @@ module Filename = Stdlib.Filename
 type 'a result = 'a list Sat.t Or_error.t [@@deriving sexp_of]
 
 let solve_with_model
-      (type a)
-      ?(solver = z3 ~parallel:false ())
-      ?(print_model = false)
-      (module Model : Cnf.Model with type input = a)
-      cnf
+  (type a)
+  ?(solver = z3 ~parallel:false ())
+  ?(print_model = false)
+  (module Model : Cnf.Model with type input = a)
+  cnf
   : a list Sat.t Or_error.t
   =
   let dimacs_file = Filename.temp_file "cnf" "dimacs" in

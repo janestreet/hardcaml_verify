@@ -64,7 +64,6 @@ module With_interface (I : Hardcaml.Interface.S) (O : Hardcaml.Interface.S) : si
   type ctl := Property.CTL.state
 
   val create : name:string -> Interface.Create_fn(I)(O).t -> t
-
   val ltl : t -> (ltl array I.t, ltl array O.t) Circuit_properties.t
   val ctl : t -> (ctl array I.t, ctl array O.t) Circuit_properties.t
   val create_specification : t -> property list -> model

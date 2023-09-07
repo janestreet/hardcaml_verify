@@ -1,4 +1,4 @@
-open Base
+open! Base
 open Expect_test_helpers_base
 open Hardcaml_verify
 open Basic_gates

@@ -14,11 +14,11 @@ depends: [
   "base"
   "hardcaml"
   "hardcaml_waveterm"
-  "ppx_deriving_hardcaml"
+  "ppx_hardcaml"
   "ppx_jane"
   "stdio"
-  "dune"                  {>= "2.0.0"}
-  "re"                    {>= "1.8.0"}
+  "dune"              {>= "2.0.0"}
+  "re"                {>= "1.8.0"}
 ]
 available: arch != "arm32" & arch != "x86_32"
 synopsis: "Hardcaml Verification Tools"

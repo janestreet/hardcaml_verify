@@ -42,14 +42,13 @@ open! Hardcaml_verify
     v}
 *)
 module I = struct
-  type 'a t = { cells : 'a array [@bits 9] [@length 9 * 9] }
-  [@@deriving sexp_of, hardcaml]
+  type 'a t = { cells : 'a array [@bits 9] [@length 9 * 9] } [@@deriving hardcaml]
 end
 
 (* The output is simply a single bit which is [1] when the input solution is valid, and
    [0] otherwise. *)
 module O = struct
-  type 'a t = { is_valid_solution : 'a } [@@deriving sexp_of, hardcaml]
+  type 'a t = { is_valid_solution : 'a } [@@deriving hardcaml]
 end
 
 module Make (Comb : Comb.S) = struct

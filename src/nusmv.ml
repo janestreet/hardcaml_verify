@@ -86,16 +86,10 @@ let write chan { circuit = circ; properties = props; atomic_propositions_map } =
       | Reg _ -> false
       | _ -> true)
   in
-  let internal_signals, memories =
-    List.partition_tf internal_signals ~f:(function
-      | Mem _ -> false
-      | _ -> true)
-  in
-  (* simple naming *)
   let name s =
     match List.hd (names s) with
     | Some x -> x
-    | None -> "_" ^ Int64.to_string (uid s)
+    | None -> "_" ^ Signal.Uid.to_string (uid s)
   in
   let word_spec s = "unsigned word [" ^ Int.to_string (width s) ^ "]" in
   let const' w s =
@@ -120,7 +114,7 @@ let write chan { circuit = circ; properties = props; atomic_propositions_map } =
   os "\n-- registers\n";
   List.iter registers ~f:(fun s -> os ("VAR " ^ name s ^ " : " ^ word_spec s ^ ";\n"));
   (* os ("-- memories\n"); *)
-  assert (List.is_empty memories);
+  (* simple naming *)
   os "\n-- combinatorial logic\n";
   let define s =
     let dep =
@@ -131,7 +125,7 @@ let write chan { circuit = circ; properties = props; atomic_propositions_map } =
     match s with
     | Empty -> failwith "NuSMV - unexpected empty signal"
     | Inst _ -> failwith "NuSMV - instantiation not supported"
-    | Reg _ | Mem _ | Multiport_mem _ | Mem_read_port _ ->
+    | Reg _ | Multiport_mem _ | Mem_read_port _ ->
       failwith "NuSMV error - reg or mem not expected here"
     | Const _ -> define s (const s)
     | Wire { driver; _ } -> define s (name !driver)

@@ -13,11 +13,11 @@ module Delayed_adder = struct
       ; foo : 'a [@bits 16]
       ; bar : 'a [@bits 16]
       }
-    [@@deriving sexp_of, hardcaml]
+    [@@deriving hardcaml]
   end
 
   module O = struct
-    type 'a t = { baz : 'a [@bits 16] } [@@deriving sexp_of, hardcaml]
+    type 'a t = { baz : 'a [@bits 16] } [@@deriving hardcaml]
   end
 
   let create (input : _ I.t) =

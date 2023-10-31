@@ -263,7 +263,7 @@ module Checkable_circuit = struct
       | Reg { signal_id = _; register = _; d = _ } ->
         (* We do nothing with registers here. *)
         Ok ready
-      | Mem _ | Multiport_mem _ | Mem_read_port _ ->
+      | Multiport_mem _ | Mem_read_port _ ->
         Or_error.error_s [%message "memories are not supported (yet)"]
       | Inst { signal_id = _; extra_uid = _; instantiation = _ } -> Ok ready)
   ;;
@@ -286,12 +286,13 @@ module Checkable_circuit = struct
 
   let scheduling_deps = function
     | Signal.Inst _ -> []
-    | s -> Signal_graph.scheduling_deps s
+    | s -> Signal_graph.deps_for_loop_checking s
   ;;
 
   let topsort outputs =
-    Or_error.try_with (fun () ->
-      Signal_graph.topological_sort ~deps:scheduling_deps (Signal_graph.create outputs))
+    Result.map_error
+      (Signal_graph.topological_sort ~deps:scheduling_deps (Signal_graph.create outputs))
+      ~f:(fun cycle -> Error.create_s [%sexp (cycle : Signal.t list)])
   ;;
 
   (* Compute a topological ordering of signals *)

@@ -1,13 +1,13 @@
-(library (name hardcaml_verify_kernel) (public_name hardcaml_verify.kernel)
+(library
+ (name hardcaml_verify_kernel)
+ (public_name hardcaml_verify.kernel)
  (libraries base hardcaml re stdio unix)
- (preprocess (pps ppx_hardcaml ppx_jane)))
+ (preprocess
+  (pps ppx_hardcaml ppx_jane)))
 
-(rule (targets config.ml) (deps)
+(rule
+ (targets config.ml)
+ (deps)
  (action
   (bash
-    "cat <<EOF > config.ml\
-   \nlet minisat = \"minisat\"\
-   \nlet picosat = \"picosat\"\
-   \nlet z3 = \"z3\"\
-   \nlet nusmv = \"NuSMV\"\
-   \nEOF")))
+    "cat <<EOF > config.ml\nlet minisat = \"minisat\"\nlet picosat = \"picosat\"\nlet z3 = \"z3\"\nlet nusmv = \"NuSMV\"\nEOF")))

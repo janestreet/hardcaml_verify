@@ -1,4 +1,5 @@
-(library (name hardcaml_verify_test)
- (libraries expect_test_helpers_core.expect_test_helpers_base
-  hardcaml_verify)
- (preprocess (pps ppx_hardcaml ppx_jane)))
+(library
+ (name hardcaml_verify_test)
+ (libraries expect_test_helpers_core.expect_test_helpers_base hardcaml_verify)
+ (preprocess
+  (pps ppx_hardcaml ppx_jane)))

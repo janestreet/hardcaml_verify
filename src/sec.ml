@@ -107,7 +107,7 @@ module Checkable_circuit = struct
       ~f_before:(fun { unscheduled; scheduled } signal ->
         if Signal.is_empty signal
         then { unscheduled; scheduled }
-        else if Signal.is_reg signal
+        else if Signal.Type.is_reg signal
         then
           { unscheduled = { unscheduled with regs = add signal unscheduled.regs }
           ; scheduled
@@ -117,12 +117,12 @@ module Checkable_circuit = struct
           { unscheduled = { unscheduled with inputs = add signal unscheduled.inputs }
           ; scheduled
           }
-        else if Signal.is_mem signal
+        else if Signal.Type.is_mem signal
         then
           { unscheduled = { unscheduled with mems = add signal unscheduled.mems }
           ; scheduled
           }
-        else if Signal.is_inst signal
+        else if Signal.Type.is_inst signal
         then
           { unscheduled = { unscheduled with insts = add signal unscheduled.insts }
           ; scheduled
@@ -284,14 +284,19 @@ module Checkable_circuit = struct
         [%message "[Sec.compile_sat_registers] Failed to add duplicate signal"]
   ;;
 
-  let scheduling_deps = function
-    | Signal.Inst _ -> []
-    | s -> Signal_graph.deps_for_loop_checking s
-  ;;
+  module Scheduling_deps = Signal.Type.Make_deps (struct
+    let fold (t : Signal.t) ~init ~f =
+      match t with
+      | Signal.Type.Inst _ -> init
+      | _ -> Signal_graph.Deps_for_loop_checking.fold t ~init ~f
+    ;;
+  end)
 
   let topsort outputs =
     Result.map_error
-      (Signal_graph.topological_sort ~deps:scheduling_deps (Signal_graph.create outputs))
+      (Signal_graph.topological_sort
+         ~deps:(module Scheduling_deps)
+         (Signal_graph.create outputs))
       ~f:(fun cycle -> Error.create_s [%sexp (cycle : Signal.t list)])
   ;;
 
@@ -410,7 +415,7 @@ let pair_signals_by_name context (signals : Signal.t list Pair.t) =
        converting one of the designs from verilog. We will do checks on the ports
        themselves. *)
     if Signal.width signal.left.data <> Signal.width signal.right.data
-       && not (Signal.is_inst signal.left.data)
+       && not (Signal.Type.is_inst signal.left.data)
     then
       Or_error.error_s
         [%message

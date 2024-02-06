@@ -98,7 +98,7 @@ let write chan { circuit = circ; properties = props; atomic_propositions_map } =
     ^ "_"
     ^ (Constant.of_binary_string s |> Constant.to_hex_string ~signedness:Unsigned)
   in
-  let const s = const' (width s) (const_value s |> Bits.to_bstr) in
+  let const s = const' (width s) (Type.const_value s |> Bits.to_bstr) in
   let consti w i = const' w (Constant.of_int ~width:w i |> Constant.to_binary_string) in
   let sel s h l = name s ^ "[" ^ Int.to_string h ^ ":" ^ Int.to_string l ^ "]" in
   let define s x =
@@ -117,37 +117,27 @@ let write chan { circuit = circ; properties = props; atomic_propositions_map } =
   (* simple naming *)
   os "\n-- combinatorial logic\n";
   let define s =
-    let dep =
-      let deps = deps s in
-      List.nth_exn deps
-    in
-    let ndep n = name (dep n) in
     match s with
-    | Empty -> failwith "NuSMV - unexpected empty signal"
+    | Type.Empty -> failwith "NuSMV - unexpected empty signal"
     | Inst _ -> failwith "NuSMV - instantiation not supported"
     | Reg _ | Multiport_mem _ | Mem_read_port _ ->
       failwith "NuSMV error - reg or mem not expected here"
     | Const _ -> define s (const s)
     | Wire { driver; _ } -> define s (name !driver)
     | Select { arg; high; low; _ } -> define s (sel arg high low)
-    | Not _ ->
-      let not_ _ = "!" ^ name (dep 0) in
+    | Not { arg; _ } ->
+      let not_ _ = "!" ^ name arg in
       define s (not_ s)
-    | Cat _ ->
-      let cat s = String.concat ~sep:"::" (List.map (deps s) ~f:name) in
-      define s (cat s)
-    | Mux _ ->
+    | Cat { args; _ } ->
+      let cat = String.concat ~sep:"::" (List.map args ~f:name) in
+      define s cat
+    | Mux { select; cases; _ } ->
       let mux _ =
         os "DEFINE ";
         os (name s);
         os " := \n";
         os "  case\n";
-        let sel, cases =
-          match deps s with
-          | sel :: cases -> sel, cases
-          | _ -> raise_s [%message "Unable to extract mux select"]
-        in
-        let nsel = name sel in
+        let nsel = name select in
         let rec f n = function
           | [] -> ()
           | [ a ] ->
@@ -155,7 +145,7 @@ let write chan { circuit = circ; properties = props; atomic_propositions_map } =
             os (name a);
             os ";\n"
           | h :: t ->
-            let w = width sel in
+            let w = width select in
             os "    ";
             os nsel;
             os "=";
@@ -169,14 +159,14 @@ let write chan { circuit = circ; properties = props; atomic_propositions_map } =
         os "  esac;\n"
       in
       mux s
-    | Op2 { op; _ } ->
-      let op2 op _ = ndep 0 ^ op ^ ndep 1 in
+    | Op2 { op; arg_a; arg_b; _ } ->
+      let op2 op _ = name arg_a ^ op ^ name arg_b in
       let wrap s t = s ^ "(" ^ t ^ ")" in
       let signed, unsigned = wrap "signed", wrap "unsigned" in
       let extend n s = wrap "extend" (s ^ ", " ^ Int.to_string n) in
       let _, word1 = wrap "bool", wrap "word1" in
       let mop2 sgn op _ =
-        let a, b = dep 0, dep 1 in
+        let a, b = arg_a, arg_b in
         let w = width a + width b in
         let ewa, ewb = w - width a, w - width b in
         let signed, unsigned =

@@ -1,7 +1,7 @@
 open Base
 open Hardcaml
-open Hardcaml_waveterm
-open Hardcaml_waveterm.Expert
+open Hardcaml_waveterm_kernel
+open Hardcaml_waveterm_cyclesim
 include Hardcaml_verify_kernel.Nusmv
 
 module Counter_example_trace = struct

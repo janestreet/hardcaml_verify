@@ -39,7 +39,8 @@ let%expect_test "input and output port checks" =
         "[Sec.pair_signals_by_name] left and right circuits contain different names"
         (context input)
         (only_in_left  (a))
-        (only_in_right (x))))) |}];
+        (only_in_right (x)))))
+    |}];
   let result = equivalent (test_or1 ()) (test_or3 ()) in
   print_s [%message (result : Sec.Equivalence_result.t Or_error.t)];
   [%expect
@@ -49,7 +50,8 @@ let%expect_test "input and output port checks" =
         "[Sec.pair_signals_by_name] left and right circuits contain different names"
         (context output)
         (only_in_left  (c))
-        (only_in_right (x))))) |}];
+        (only_in_right (x)))))
+    |}];
   let result = equivalent (test_or1 ()) (test_and ()) in
   print_s [%message (result : Sec.Equivalence_result.t Or_error.t)];
   [%expect
@@ -58,7 +60,8 @@ let%expect_test "input and output port checks" =
       Ok (
         Sat (
           ((name input$a) (value 0))
-          ((name input$b) (value 1)))))) |}]
+          ((name input$b) (value 1))))))
+    |}]
 ;;
 
 (* Inputs and output swap (no logic involved) *)
@@ -80,7 +83,8 @@ let%expect_test "swap wires" =
       Ok (
         Sat (
           ((name input$a) (value 1))
-          ((name input$b) (value 0)))))) |}]
+          ((name input$b) (value 0))))))
+    |}]
 ;;
 
 (* Simple register based test.
@@ -144,7 +148,8 @@ let%expect_test "show different clocks are detected" =
           ((name input$clock1)  (value 1))
           ((name input$clock2)  (value 0))
           ((name register$reg1) (value 01))
-          ((name register$reg2) (value 10)))))) |}]
+          ((name register$reg2) (value 10))))))
+    |}]
 ;;
 
 (* Edge/Level of clock, reset, clear *)
@@ -197,7 +202,8 @@ let%expect_test "edges and levels" =
           (l (
             (left  High)
             (right Low)))
-          (name reg1))))) |}]
+          (name reg1)))))
+    |}]
 ;;
 
 (* Counter logic with feedback. This shows the need for scheduling (topological sorting
@@ -225,7 +231,8 @@ let%expect_test "logic with feedback" =
         Sat (
           ((name input$clear)  (value 0))
           ((name input$clock)  (value 1))
-          ((name register$cnt) (value 00000000)))))) |}]
+          ((name register$cnt) (value 00000000))))))
+    |}]
 ;;
 
 (* Simple instantiations *)
@@ -302,7 +309,8 @@ let%expect_test "instantiation" =
           ((name input$y)              (value 1))
           ((name instantiation$bar1$c) (value 11010))
           ((name instantiation$bar1$d) (value 10000))
-          ((name instantiation$foo1$c) (value 110)))))) |}];
+          ((name instantiation$foo1$c) (value 110))))))
+    |}];
   (* Outputs of inst are wired differently *)
   let result = equivalent (test_inst1 ()) (test_inst3 ()) in
   print_s [%message (result : Sec.Equivalence_result.t Or_error.t)];
@@ -315,7 +323,8 @@ let%expect_test "instantiation" =
           ((name input$y)              (value 1))
           ((name instantiation$bar1$c) (value 10111))
           ((name instantiation$bar1$d) (value 01010))
-          ((name instantiation$foo1$c) (value 100)))))) |}];
+          ((name instantiation$foo1$c) (value 100))))))
+    |}];
   (* Instantiations names dont match *)
   let result = equivalent (test_inst1 ()) (test_inst4 ()) in
   print_s [%message (result : Sec.Equivalence_result.t Or_error.t)];
@@ -326,7 +335,8 @@ let%expect_test "instantiation" =
         "[Sec.pair_signals_by_name] left and right circuits contain different names"
         (context instantiation)
         (only_in_left  (bar1))
-        (only_in_right (bar2))))) |}]
+        (only_in_right (bar2)))))
+    |}]
 ;;
 
 let test_inst_with_cycle e_bit =
@@ -352,7 +362,8 @@ let%expect_test "cycle through instantiation" =
           ((name input$x)              (value 0))
           ((name instantiation$bar1$c) (value 01000))
           ((name instantiation$bar1$d) (value 11110))
-          ((name instantiation$foo1$c) (value 001)))))) |}]
+          ((name instantiation$foo1$c) (value 001))))))
+    |}]
 ;;
 
 (* We allow instantiations to have different port sets. The following has differing inputs
@@ -406,8 +417,7 @@ let%expect_test "instantiation port subsets" =
       (test_inst6 ())
   in
   print_s [%message (result : Sec.Equivalence_result.t Or_error.t)];
-  [%expect {|
-    (result (Ok Unsat)) |}]
+  [%expect {| (result (Ok Unsat)) |}]
 ;;
 
 (* Instantiation inputs and output must be the same width *)
@@ -472,7 +482,8 @@ let%expect_test "instantiation input port width mismatch" =
             (names (x))
             (width   1)
             (data_in empty)))))
-        (unmatched_on_right ((a (cat (width 2) (arguments (x x))))))))) |}]
+        (unmatched_on_right ((a (cat (width 2) (arguments (x x)))))))))
+    |}]
 ;;
 
 let%expect_test "instantiation output port width mismatch" =
@@ -499,5 +510,6 @@ let%expect_test "instantiation output port width mismatch" =
               (parameters ())
               (inputs  ((a x)))
               (outputs ((b 2))))))))
-        (p ((left ((b (1 0)))) (right ((b (2 0))))))))) |}]
+        (p ((left ((b (1 0)))) (right ((b (2 0)))))))))
+    |}]
 ;;

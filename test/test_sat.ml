@@ -13,7 +13,8 @@ let%expect_test "single bit" =
       Ok (
         Sat ((
           (name  a)
-          (value 1)))))) |}];
+          (value 1))))))
+    |}];
   let sat = Solver.solve (cnf ~:(input "a" 1)) in
   print_s [%message (sat : Cnf.Model_with_vectors.input Solver.result)];
   [%expect
@@ -22,7 +23,8 @@ let%expect_test "single bit" =
       Ok (
         Sat ((
           (name  a)
-          (value 0)))))) |}]
+          (value 0))))))
+    |}]
 ;;
 
 let%expect_test "2*a cannot be odd" =

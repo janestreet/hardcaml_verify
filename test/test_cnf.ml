@@ -24,7 +24,8 @@ let%expect_test "empty" =
       (int_map     ())
       (conjunction ())
       (number_of_variables 0)
-      (number_of_clauses   0))) |}]
+      (number_of_clauses   0)))
+    |}]
 ;;
 
 let%expect_test "empty disjunction" =
@@ -38,7 +39,8 @@ let%expect_test "empty disjunction" =
       (int_map    ())
       (conjunction (()))
       (number_of_variables 0)
-      (number_of_clauses   1))) |}]
+      (number_of_clauses   1)))
+    |}]
 ;;
 
 let%expect_test "show data structure" =
@@ -65,7 +67,8 @@ let%expect_test "show data structure" =
         ((N (a 1 1 false))
          (P (b 0 2 false)))))
       (number_of_variables 3)
-      (number_of_clauses   2))) |}]
+      (number_of_clauses   2)))
+    |}]
 ;;
 
 let%expect_test "print problem" =
@@ -77,7 +80,8 @@ let%expect_test "print problem" =
   [%expect {|
     vars=3 clauses=2
     a/0/1 a/1/1 -b/0/2
-    -a/1/1 b/0/2 |}];
+    -a/1/1 b/0/2
+    |}];
   (* fancy pretty printer *)
   let cnf =
     Cnf.fold cnf ~init:[] ~f:(fun lst disjunction ->

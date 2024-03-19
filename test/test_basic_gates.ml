@@ -7,16 +7,17 @@ let%expect_test "basic gate constructors" =
   print_s [%message (vdd : t) (gnd : t)];
   [%expect {|
     ((vdd Vdd)
-     (gnd Gnd)) |}];
+     (gnd Gnd))
+    |}];
   let a, b = var (Label.create1 "foo"), var (Label.create1 "bar") in
   print_s [%message (a : t) (b : t)];
   [%expect
     {|
     ((a (Var (uid 3) (label (foo 0 2 false))))
-     (b (Var (uid 2) (label (bar 0 1 false))))) |}];
+     (b (Var (uid 2) (label (bar 0 1 false)))))
+    |}];
   print_s [%message (~:a : t)];
-  [%expect {|
-    ("~: a" (Not (uid 4) (arg (Var (uid 3) (label (foo 0 2 false)))))) |}];
+  [%expect {| ("~: a" (Not (uid 4) (arg (Var (uid 3) (label (foo 0 2 false)))))) |}];
   print_s [%message (a &: b : t)];
   [%expect
     {|
@@ -24,7 +25,8 @@ let%expect_test "basic gate constructors" =
       And
       (uid 5)
       (arg1 (Var (uid 3) (label (foo 0 2 false))))
-      (arg2 (Var (uid 2) (label (bar 0 1 false)))))) |}];
+      (arg2 (Var (uid 2) (label (bar 0 1 false))))))
+    |}];
   print_s [%message (a |: b : t)];
   [%expect
     {|
@@ -32,7 +34,8 @@ let%expect_test "basic gate constructors" =
       Or
       (uid 6)
       (arg1 (Var (uid 3) (label (foo 0 2 false))))
-      (arg2 (Var (uid 2) (label (bar 0 1 false)))))) |}];
+      (arg2 (Var (uid 2) (label (bar 0 1 false))))))
+    |}];
   print_s [%message (a ^: b : t)];
   [%expect
     {|
@@ -40,7 +43,8 @@ let%expect_test "basic gate constructors" =
       Xor
       (uid 7)
       (arg1 (Var (uid 3) (label (foo 0 2 false))))
-      (arg2 (Var (uid 2) (label (bar 0 1 false)))))) |}]
+      (arg2 (Var (uid 2) (label (bar 0 1 false))))))
+    |}]
 ;;
 
 let%expect_test "constant propogation (~:)" =
@@ -48,10 +52,10 @@ let%expect_test "constant propogation (~:)" =
   print_s [%message (~:gnd : t) (~:vdd : t)];
   [%expect {|
     (("~: gnd" Vdd)
-     ("~: vdd" Gnd)) |}];
+     ("~: vdd" Gnd))
+    |}];
   print_s [%message (~:(~:a) : t)];
-  [%expect {|
-    ("~: (~: a)" (Var (uid 8) (label (a 0 3 false)))) |}]
+  [%expect {| ("~: (~: a)" (Var (uid 8) (label (a 0 3 false)))) |}]
 ;;
 
 let%expect_test "constant propogation (&:)" =
@@ -62,17 +66,16 @@ let%expect_test "constant propogation (&:)" =
     (("gnd &: gnd" Gnd)
      ("gnd &: vdd" Gnd)
      ("vdd &: gnd" Gnd)
-     ("vdd &: vdd" Vdd)) |}];
+     ("vdd &: vdd" Vdd))
+    |}];
   print_s [%message (a &: gnd : t)];
   [%expect {| ("a &: gnd" Gnd) |}];
   print_s [%message (gnd &: b : t)];
   [%expect {| ("gnd &: b" Gnd) |}];
   print_s [%message (a &: vdd : t)];
-  [%expect {|
-    ("a &: vdd" (Var (uid 11) (label (a 0 5 false)))) |}];
+  [%expect {| ("a &: vdd" (Var (uid 11) (label (a 0 5 false)))) |}];
   print_s [%message (vdd &: b : t)];
-  [%expect {|
-    ("vdd &: b" (Var (uid 10) (label (b 0 4 false)))) |}]
+  [%expect {| ("vdd &: b" (Var (uid 10) (label (b 0 4 false)))) |}]
 ;;
 
 let%expect_test "constant propogation (|:)" =
@@ -83,19 +86,16 @@ let%expect_test "constant propogation (|:)" =
     (("gnd |: gnd" Gnd)
      ("gnd |: vdd" Vdd)
      ("vdd |: gnd" Vdd)
-     ("vdd |: vdd" Vdd)) |}];
+     ("vdd |: vdd" Vdd))
+    |}];
   print_s [%message (a |: gnd : t)];
-  [%expect {|
-    ("a |: gnd" (Var (uid 13) (label (a 0 7 false)))) |}];
+  [%expect {| ("a |: gnd" (Var (uid 13) (label (a 0 7 false)))) |}];
   print_s [%message (gnd |: b : t)];
-  [%expect {|
-    ("gnd |: b" (Var (uid 12) (label (b 0 6 false)))) |}];
+  [%expect {| ("gnd |: b" (Var (uid 12) (label (b 0 6 false)))) |}];
   print_s [%message (a |: vdd : t)];
-  [%expect {|
-    ("a |: vdd" Vdd) |}];
+  [%expect {| ("a |: vdd" Vdd) |}];
   print_s [%message (vdd |: b : t)];
-  [%expect {|
-    ("vdd |: b" Vdd) |}]
+  [%expect {| ("vdd |: b" Vdd) |}]
 ;;
 
 let%expect_test "constant propogation (^:)" =
@@ -106,19 +106,14 @@ let%expect_test "constant propogation (^:)" =
     (("gnd ^: gnd" Gnd)
      ("gnd ^: vdd" Vdd)
      ("vdd ^: gnd" Vdd)
-     ("vdd ^: vdd" Gnd)) |}];
+     ("vdd ^: vdd" Gnd))
+    |}];
   print_s [%message (a ^: gnd : t)];
-  [%expect {|
-    ("a ^: gnd" (Var (uid 15) (label (a 0 9 false)))) |}];
+  [%expect {| ("a ^: gnd" (Var (uid 15) (label (a 0 9 false)))) |}];
   print_s [%message (gnd ^: b : t)];
-  [%expect {|
-    ("gnd ^: b" (Var (uid 14) (label (b 0 8 false)))) |}];
+  [%expect {| ("gnd ^: b" (Var (uid 14) (label (b 0 8 false)))) |}];
   print_s [%message (a ^: vdd : t)];
-  [%expect
-    {|
-    ("a ^: vdd" (Not (uid 16) (arg (Var (uid 15) (label (a 0 9 false)))))) |}];
+  [%expect {| ("a ^: vdd" (Not (uid 16) (arg (Var (uid 15) (label (a 0 9 false)))))) |}];
   print_s [%message (vdd ^: b : t)];
-  [%expect
-    {|
-    ("vdd ^: b" (Not (uid 17) (arg (Var (uid 14) (label (b 0 8 false)))))) |}]
+  [%expect {| ("vdd ^: b" (Not (uid 17) (arg (Var (uid 14) (label (b 0 8 false)))))) |}]
 ;;

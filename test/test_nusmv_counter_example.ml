@@ -46,7 +46,8 @@ let%expect_test "parse word constant" =
     ("parse_word_constant \"0sb8_10101010\"" 10101010)
     ("parse_word_constant \"0uh32_fb73da62\"" 11111011011100111101101001100010)
     ("parse_word_constant \"- 0b8_1\"" 11111111)
-    ("parse_word_constant \"- 0h16_7fff\"" 1000000000000001) |}]
+    ("parse_word_constant \"- 0h16_7fff\"" 1000000000000001)
+    |}]
 ;;
 
 let%expect_test "dont parse decimal constant without size" =
@@ -64,7 +65,8 @@ let%expect_test "dont parse if size lower than constant" =
     ("Parsed word constant is wider than its specified width" 0b2_1011)
     ("Parsed word constant is wider than its specified width" 0o4_37)
     ("Parsed word constant is wider than its specified width" 0d4_16023)
-    ("Parsed word constant is wider than its specified width" 0h4_ff) |}]
+    ("Parsed word constant is wider than its specified width" 0h4_ff)
+    |}]
 ;;
 
 let%expect_test "clear resets registers" =
@@ -83,8 +85,7 @@ let%expect_test "clear resets registers" =
   let model = Model.create_specification model properties in
   let proofs = Nusmv.run model in
   Stdio.print_s [%message (proofs : Nusmv.Proof_result.t list)];
-  [%expect {|
-      (proofs (Tautology Tautology)) |}]
+  [%expect {| (proofs (Tautology Tautology)) |}]
 ;;
 
 let%expect_test "example NuSMV failure trace" =
@@ -176,5 +177,6 @@ let%expect_test "example NuSMV failure trace" =
     │               ││                                                   │
     │               ││                                                   │
     └───────────────┘└───────────────────────────────────────────────────┘
-    726333f97f8d4cdd3dfb8d81799270a6 |}]
+    726333f97f8d4cdd3dfb8d81799270a6
+    |}]
 ;;

@@ -17,7 +17,8 @@ let%expect_test "dimacs" =
   [%expect {|
     p cnf 3 2
     1 2 -3 0
-    -2 3 0 |}]
+    -2 3 0
+    |}]
 ;;
 
 let%expect_test "parse dimacs result" =

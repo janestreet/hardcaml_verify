@@ -70,7 +70,8 @@ let%expect_test "nqueens 5" =
     .Q...
     ....Q
     ..Q..
-    Q.... |}]
+    Q....
+    |}]
 ;;
 
 let%expect_test "nqueens 10" =
@@ -86,5 +87,6 @@ let%expect_test "nqueens 10" =
     ......Q...
     ........Q.
     ..Q.......
-    Q......... |}]
+    Q.........
+    |}]
 ;;

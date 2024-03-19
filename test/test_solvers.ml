@@ -27,7 +27,8 @@ let%expect_test "z3" =
       Ok (
         Sat (
           ((name a) (value 00))
-          ((name b) (value 0)))))) |}];
+          ((name b) (value 0))))))
+    |}];
   (* let result = Solver.(solve ~solver:(z3 ~parallel:true) cnf) in
    * print_s [%message (result : Solver.result)];
    * [%expect

@@ -167,7 +167,7 @@ let%expect_test "sudoku 1" =
     384 195 726
     956 472 318
     127 836 459
-|}]
+    |}]
 ;;
 
 let%expect_test "sudoku 2" =
@@ -199,7 +199,8 @@ let%expect_test "sudoku 2" =
 
     631 725 948
     942 618 573
-    857 934 216 |}]
+    857 934 216
+    |}]
 ;;
 
 let%expect_test "sudoku 3" =
@@ -231,7 +232,8 @@ let%expect_test "sudoku 3" =
 
     712 945 368
     934 682 157
-    856 713 942 |}]
+    856 713 942
+    |}]
 ;;
 
 let%expect_test "sudoku 4" =
@@ -251,5 +253,6 @@ let%expect_test "sudoku 4" =
 
     821 654 973
     637 982 451
-    954 731 268 |}]
+    954 731 268
+    |}]
 ;;

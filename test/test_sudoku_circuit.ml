@@ -271,7 +271,8 @@ let%expect_test "solve" =
           ((name v75) (value 1010000-0))
           ((name v77) (value 000011--1))
           ((name v79) (value 01010-1-0))
-          ((name v9)  (value 0-0--000-)))))) |}]
+          ((name v9)  (value 0-0--000-))))))
+    |}]
 ;;
 
 (* This version fixes the problem.
@@ -359,5 +360,6 @@ let%expect_test "solve properly" =
            ((name v79) (value 000100000))
            ((name v9)  (value 000000100))))))
      ("Sudoku_checker.get_solution puzzle sat"
-      216345789348197625579268314462519837183476592795823146821654973637982451954731268)) |}]
+      216345789348197625579268314462519837183476592795823146821654973637982451954731268))
+    |}]
 ;;

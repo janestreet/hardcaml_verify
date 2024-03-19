@@ -7,8 +7,7 @@ let%expect_test "input" =
   let a = input "a" 2 in
   print_s [%message (a : t)];
   [%expect
-    {|
-    (a ((Var (uid 2) (label (a 1 3 false))) (Var (uid 3) (label (a 0 3 false))))) |}]
+    {| (a ((Var (uid 2) (label (a 1 3 false))) (Var (uid 3) (label (a 0 3 false))))) |}]
 ;;
 
 let%expect_test "addition" =
@@ -35,7 +34,8 @@ let%expect_test "addition" =
       (Xor
         (uid 8)
         (arg1 (Var (uid 5) (label (a 0 4 false))))
-        (arg2 (Var (uid 7) (label (b 0 5 false))))))) |}];
+        (arg2 (Var (uid 7) (label (b 0 5 false)))))))
+    |}];
   (* evaluate - this is done via cofactor all inputs and relying on constant
      propogation to reduce all outputs to constants. *)
   let eval a' b' =
@@ -62,5 +62,6 @@ let%expect_test "addition" =
       ((Vdd Vdd)
        (Gnd Gnd)
        (Gnd Vdd)
-       (Vdd Gnd)))) |}]
+       (Vdd Gnd))))
+    |}]
 ;;

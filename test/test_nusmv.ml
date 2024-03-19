@@ -80,7 +80,8 @@ let%expect_test "retime" =
     DEFINE __ap_prop := prop;
 
     -- SPECS
-    LTLSPEC (G bool(__ap_prop)); |}]
+    LTLSPEC (G bool(__ap_prop));
+    |}]
 ;;
 
 let%expect_test "register output == register input at previous cycle, if enabled" =
@@ -123,7 +124,7 @@ let%expect_test "register output == register input at previous cycle, if enabled
 
     -- SPECS
     LTLSPEC (G ((!((!bool(__ap_clear)) & bool(__ap_enable))) | (!((bool(__ap_d) & (!(X bool(__ap_q)))) | ((!bool(__ap_d)) & (X bool(__ap_q)))))));
-|}]
+    |}]
 ;;
 
 let%expect_test "Due to circuit rewriting, internal signals get new uids. If they were \
@@ -173,5 +174,5 @@ let%expect_test "Due to circuit rewriting, internal signals get new uids. If the
 
     -- SPECS
     LTLSPEC (G ((!bool(__ap_1)) | (!((bool(__ap_d) & (!(X bool(__ap_q)))) | ((!bool(__ap_d)) & (X bool(__ap_q)))))));
-|}]
+    |}]
 ;;

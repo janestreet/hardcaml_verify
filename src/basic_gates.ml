@@ -171,10 +171,10 @@ let depth_first_search t ~init ~f =
 ;;
 
 module Tseitin = Tseitin.Make (struct
-  type t = Cnf.Literal.t
+    type t = Cnf.Literal.t
 
-  let ( ~: ) = Cnf.( ~: )
-end)
+    let ( ~: ) = Cnf.( ~: )
+  end)
 
 let cnf ?(show_hidden = false) fn =
   let _map, cnf, final_term =

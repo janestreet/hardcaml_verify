@@ -77,7 +77,8 @@ let%expect_test "print problem" =
     Cnf.Disjunction.iter disjunction ~f:(fun literal ->
       printf "%s " (Cnf.Literal.to_string literal));
     printf "\n");
-  [%expect {|
+  [%expect
+    {|
     vars=3 clauses=2
     a/0/1 a/1/1 -b/0/2
     -a/1/1 b/0/2

@@ -312,11 +312,11 @@ module Output_parser = struct
           if num_leading_zeroes = 0
           then true
           else (
-            let leading_zeroes = Bits.sel_top bits_wrong_size num_leading_zeroes in
+            let leading_zeroes = Bits.sel_top bits_wrong_size ~width:num_leading_zeroes in
             Bits.(leading_zeroes ==:. 0) |> Bits.to_bool)
         in
         if fits_within_size
-        then Bits.uresize bits_wrong_size (Int.of_string width_str)
+        then Bits.uresize bits_wrong_size ~width:(Int.of_string width_str)
         else
           raise_s
             [%message

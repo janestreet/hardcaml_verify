@@ -259,7 +259,7 @@ module Checkable_circuit = struct
           add driver)
       | Select { signal_id = _; arg; high; low } ->
         let%bind.Or_error arg = find arg in
-        add (Comb_gates.select arg high low)
+        add arg.Comb_gates.:[high, low]
       | Reg { signal_id = _; register = _; d = _ } ->
         (* We do nothing with registers here. *)
         Ok ready
@@ -285,12 +285,12 @@ module Checkable_circuit = struct
   ;;
 
   module Scheduling_deps = Signal.Type.Make_deps (struct
-    let fold (t : Signal.t) ~init ~f =
-      match t with
-      | Signal.Type.Inst _ -> init
-      | _ -> Signal_graph.Deps_for_loop_checking.fold t ~init ~f
-    ;;
-  end)
+      let fold (t : Signal.t) ~init ~f =
+        match t with
+        | Signal.Type.Inst _ -> init
+        | _ -> Signal_graph.Deps_for_loop_checking.fold t ~init ~f
+      ;;
+    end)
 
   let topsort outputs =
     Result.map_error
@@ -607,8 +607,7 @@ let rebuild_left_instantiation_pseudo_input_from_right
               (insts.left.inst_name : string)
               (insts.left.inst_instance : string)
               (port_name : string)]
-      | Some (width, lo_index) ->
-        Ok (Comb_gates.select input (width + lo_index - 1) lo_index))
+      | Some (width, lo_index) -> Ok input.Comb_gates.:[width + lo_index - 1, lo_index])
     |> Or_error.all
   in
   Ok (Comb_gates.concat_msb left_ports)
@@ -826,7 +825,7 @@ let create ?(instantiation_ports_match : Instantiation_ports_match.t = Exactly) 
       paired_regs.inputs
       paired_instantiations.inputs
       ~f:(fun checkable_circuit inputs registers instantiations ->
-      Checkable_circuit.compile checkable_circuit ~inputs ~registers ~instantiations)
+        Checkable_circuit.compile checkable_circuit ~inputs ~registers ~instantiations)
   in
   (* Build the logical equivalence proposition *)
   let sat_gates = Pair.map compiled_circuits ~f:(fun c -> c.sat_gates) in

@@ -397,7 +397,7 @@ let test_inst5 () =
   let a = input "x" 1 in
   let b = input "y" 1 in
   let c = inst3 1 a in
-  let c = c |: repeat b 3 in
+  let c = c |: repeat b ~count:3 in
   Circuit.create_exn ~name:"top" [ output "c" c ]
 ;;
 
@@ -405,7 +405,7 @@ let test_inst6 () =
   let a = input "x" 1 in
   let b = input "y" 1 in
   let c = inst4 1 a b in
-  let c = c |: repeat b 3 in
+  let c = c |: repeat b ~count:3 in
   Circuit.create_exn ~name:"top" [ output "c" c ]
 ;;
 
@@ -442,7 +442,7 @@ let test_inst7 () =
 
 let test_inst8 () =
   let a = input "x" 1 in
-  let b = inst6 (repeat a 2) 1 in
+  let b = inst6 (repeat a ~count:2) 1 in
   Circuit.create_exn ~name:"top" [ output "b" b ]
 ;;
 

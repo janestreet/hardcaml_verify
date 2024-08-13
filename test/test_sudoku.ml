@@ -120,9 +120,9 @@ let solve puzzle =
     let soln =
       soln
       |> List.map ~f:(fun (l : Cnf.Model_with_bits.input) ->
-           match l.value with
-           | '1' -> Label.bit_pos l.label
-           | _ -> -Label.bit_pos l.label)
+        match l.value with
+        | '1' -> Label.bit_pos l.label
+        | _ -> -Label.bit_pos l.label)
       |> List.filter ~f:(( < ) 0)
       |> List.map ~f:(fun i -> (i / 100, i % 100 / 10), i % 10)
     in

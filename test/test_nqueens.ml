@@ -65,7 +65,8 @@ let nqueens size =
 
 let%expect_test "nqueens 5" =
   nqueens 5;
-  [%expect {|
+  [%expect
+    {|
     ...Q.
     .Q...
     ....Q

@@ -195,7 +195,7 @@ module Model_with_vectors = struct
            let value = Bytes.to_string str |> String.rev in
            { name; value })
          |> List.sort ~compare:(fun { name = n1; _ } { name = n2; _ } ->
-              String.compare n1 n2))
+           String.compare n1 n2))
   ;;
 
   let print out_chan (model : input list Sat.t Or_error.t) =

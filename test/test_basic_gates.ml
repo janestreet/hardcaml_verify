@@ -5,7 +5,8 @@ open Basic_gates
 
 let%expect_test "basic gate constructors" =
   print_s [%message (vdd : t) (gnd : t)];
-  [%expect {|
+  [%expect
+    {|
     ((vdd Vdd)
      (gnd Gnd))
     |}];
@@ -50,7 +51,8 @@ let%expect_test "basic gate constructors" =
 let%expect_test "constant propogation (~:)" =
   let a = var (Label.create1 "a") in
   print_s [%message (~:gnd : t) (~:vdd : t)];
-  [%expect {|
+  [%expect
+    {|
     (("~: gnd" Vdd)
      ("~: vdd" Gnd))
     |}];

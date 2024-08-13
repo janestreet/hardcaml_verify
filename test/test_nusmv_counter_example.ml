@@ -51,15 +51,15 @@ let%expect_test "parse word constant" =
 ;;
 
 let%expect_test "dont parse decimal constant without size" =
-  require_does_raise [%here] (fun () -> parse_word_constant "0d_10");
+  require_does_raise (fun () -> parse_word_constant "0d_10");
   [%expect {| ("Decimal word constants must specify a size" 0d_10) |}]
 ;;
 
 let%expect_test "dont parse if size lower than constant" =
-  require_does_raise [%here] (fun () -> parse_word_constant "0b2_1011");
-  require_does_raise [%here] (fun () -> parse_word_constant "0o4_37");
-  require_does_raise [%here] (fun () -> parse_word_constant "0d4_16023");
-  require_does_raise [%here] (fun () -> parse_word_constant "0h4_ff");
+  require_does_raise (fun () -> parse_word_constant "0b2_1011");
+  require_does_raise (fun () -> parse_word_constant "0o4_37");
+  require_does_raise (fun () -> parse_word_constant "0d4_16023");
+  require_does_raise (fun () -> parse_word_constant "0h4_ff");
   [%expect
     {|
     ("Parsed word constant is wider than its specified width" 0b2_1011)

@@ -14,7 +14,8 @@ let cnf =
 
 let%expect_test "dimacs" =
   Dimacs.write_problem cnf Stdio.stdout;
-  [%expect {|
+  [%expect
+    {|
     p cnf 3 2
     1 2 -3 0
     -2 3 0

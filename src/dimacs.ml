@@ -23,9 +23,9 @@ let parse_sat_result lines =
       |> List.map ~f:(String.split_on_chars ~on:[ ' '; '\r'; '\t'; '\n' ])
       |> List.concat
       |> List.filter_map ~f:(fun s ->
-           if String.compare s "v" = 0 || String.compare s "" = 0
-           then None
-           else Some (Int.of_string s))
+        if String.compare s "v" = 0 || String.compare s "" = 0
+        then None
+        else Some (Int.of_string s))
     in
     Ok (Sat.Sat l)
   with

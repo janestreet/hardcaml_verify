@@ -194,14 +194,21 @@ let write chan { circuit = circ; properties = props; atomic_propositions_map } =
     | Reg { register = r; d = din; _ } ->
       let next s =
         let mux2 s t f = "(bool(" ^ s ^ ")?" ^ t ^ ":" ^ f ^ ")" in
-        let mux2e s t f =
+        let mux2_enable s t f =
           if Signal.is_empty s || Signal.is_vdd s
           then t
           else if Signal.is_gnd s
           then f
           else mux2 (name s) t f
         in
-        let mux2_edge s (e : Edge.t) t f =
+        let mux2_clear s t f =
+          if Signal.is_vdd s
+          then t
+          else if Signal.is_empty s || Signal.is_gnd s
+          then f
+          else mux2 (name s) t f
+        in
+        let mux2_reset s (e : Edge.t) t f =
           if Signal.is_empty s
           then f
           else (
@@ -209,26 +216,18 @@ let write chan { circuit = circ; properties = props; atomic_propositions_map } =
             | Rising -> mux2 (name s) t f
             | Falling -> mux2 (name s) f t)
         in
-        let mux2_level s (l : Level.t) t f =
-          if Signal.is_empty s
-          then f
-          else (
-            match l with
-            | High -> mux2 (name s) t f
-            | Low -> mux2 (name s) f t)
-        in
-        let nxt = mux2e r.reg_enable (name din) (name s) in
-        let nxt = mux2_level r.reg_clear r.reg_clear_level (name r.reg_clear_value) nxt in
-        let nxt = mux2_edge r.reg_reset r.reg_reset_edge (name r.reg_reset_value) nxt in
+        let nxt = mux2_enable r.enable (name din) (name s) in
+        let nxt = mux2_clear r.spec.clear (name r.clear_to) nxt in
+        let nxt = mux2_reset r.spec.reset r.spec.reset_edge (name r.reset_to) nxt in
         nxt
       in
       let init s =
-        if Signal.is_empty r.reg_reset
+        if Signal.is_empty r.spec.reset
         then
-          if Signal.is_empty r.reg_reset_value
+          if Signal.is_empty r.reset_to
           then consti (width s) 0 (* default to zero *)
-          else const r.reg_reset_value (* treat as a default value *)
-        else const r.reg_reset_value
+          else const r.reset_to (* treat as a default value *)
+        else const r.reset_to
       in
       os ("ASSIGN init(" ^ name s ^ ") := " ^ init s ^ ";\n");
       os ("ASSIGN next(" ^ name s ^ ") := " ^ next s ^ ";\n")

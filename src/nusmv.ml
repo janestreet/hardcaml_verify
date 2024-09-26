@@ -119,11 +119,12 @@ let write chan { circuit = circ; properties = props; atomic_propositions_map } =
   let define s =
     match s with
     | Type.Empty -> failwith "NuSMV - unexpected empty signal"
+    | Wire { driver = None; _ } -> failwith "NuSMV - unexpected undriven wire"
     | Inst _ -> failwith "NuSMV - instantiation not supported"
     | Reg _ | Multiport_mem _ | Mem_read_port _ ->
       failwith "NuSMV error - reg or mem not expected here"
     | Const _ -> define s (const s)
-    | Wire { driver; _ } -> define s (name !driver)
+    | Wire { driver = Some driver; _ } -> define s (name driver)
     | Select { arg; high; low; _ } -> define s (sel arg high low)
     | Not { arg; _ } ->
       let not_ _ = "!" ^ name arg in
@@ -189,49 +190,55 @@ let write chan { circuit = circ; properties = props; atomic_propositions_map } =
   in
   List.iter internal_signals ~f:define;
   os "\n-- register updates\n";
-  List.iter registers ~f:(fun s ->
-    match s with
-    | Reg { register = r; d = din; _ } ->
-      let next s =
-        let mux2 s t f = "(bool(" ^ s ^ ")?" ^ t ^ ":" ^ f ^ ")" in
-        let mux2e s t f =
-          if Signal.is_empty s || Signal.is_vdd s
-          then t
-          else if Signal.is_gnd s
-          then f
-          else mux2 (name s) t f
+  List.iter registers ~f:(fun current ->
+    match current with
+    | Reg { register; d; _ } ->
+      let next =
+        let mux2 sel on_true on_false =
+          "(bool(" ^ sel ^ ")?" ^ on_true ^ ":" ^ on_false ^ ")"
         in
-        let mux2_edge s (e : Edge.t) t f =
-          if Signal.is_empty s
-          then f
-          else (
-            match e with
-            | Rising -> mux2 (name s) t f
-            | Falling -> mux2 (name s) f t)
+        let nxt =
+          let d = name d in
+          Option.value_map register.enable ~default:d ~f:(fun enable ->
+            mux2 (name enable) d (name current))
         in
-        let mux2_level s (l : Level.t) t f =
-          if Signal.is_empty s
-          then f
-          else (
-            match l with
-            | High -> mux2 (name s) t f
-            | Low -> mux2 (name s) f t)
+        let nxt =
+          Option.value_map register.clear ~default:nxt ~f:(fun { clear; clear_to } ->
+            mux2 (name clear) (name clear_to) nxt)
         in
-        let nxt = mux2e r.reg_enable (name din) (name s) in
-        let nxt = mux2_level r.reg_clear r.reg_clear_level (name r.reg_clear_value) nxt in
-        let nxt = mux2_edge r.reg_reset r.reg_reset_edge (name r.reg_reset_value) nxt in
+        let nxt =
+          Option.value_map
+            register.reset
+            ~default:nxt
+            ~f:(fun { reset; reset_edge; reset_to } ->
+              match reset_edge with
+              | Rising -> mux2 (name reset) (name reset_to) nxt
+              | Falling -> mux2 (name reset) nxt (name reset_to))
+        in
         nxt
       in
-      let init s =
-        if Signal.is_empty r.reg_reset
-        then
-          if Signal.is_empty r.reg_reset_value
-          then consti (width s) 0 (* default to zero *)
-          else const r.reg_reset_value (* treat as a default value *)
-        else const r.reg_reset_value
+      let init =
+        (* Choose
+
+           - reset value
+           - initial value
+           - or zeros
+
+           in that order for the initial value of the register.
+        *)
+        let default =
+          Option.value_map
+            register.initialize_to
+            ~default:(consti (width current) 0)
+            ~f:(fun initial -> const initial)
+        in
+        Option.value_map
+          register.reset
+          ~default
+          ~f:(fun { reset = _; reset_edge = _; reset_to } -> const reset_to)
       in
-      os ("ASSIGN init(" ^ name s ^ ") := " ^ init s ^ ";\n");
-      os ("ASSIGN next(" ^ name s ^ ") := " ^ next s ^ ";\n")
+      os ("ASSIGN init(" ^ name current ^ ") := " ^ init ^ ";\n");
+      os ("ASSIGN next(" ^ name current ^ ") := " ^ next ^ ";\n")
     | _ -> failwith "NuSMV - expecting a register");
   os "\n-- outputs\n";
   List.iter outputs ~f:define;

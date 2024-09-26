@@ -73,10 +73,9 @@ module Checkable_circuit = struct
     ; clock_edge : Edge.t
     ; reset : Comb_gates.t option
     ; reset_edge : Edge.t
-    ; reset_value : Comb_gates.t option
+    ; reset_to : Comb_gates.t option
     ; clear : Comb_gates.t option
-    ; clear_level : Level.t
-    ; clear_value : Comb_gates.t option
+    ; clear_to : Comb_gates.t option
     ; enable : Comb_gates.t option
     ; d : Comb_gates.t
     }
@@ -147,36 +146,33 @@ module Checkable_circuit = struct
           [%message
             "[Sec.register_outputs] failed to lookup input to register" (s : Signal.t)]
     in
-    let map_empty s =
-      if Signal.is_empty s
-      then Ok None
-      else (
+    let find_opt s =
+      match s with
+      | None -> Ok None
+      | Some s ->
         let%bind.Or_error s = find s in
-        Ok (Some s))
+        Ok (Some s)
     in
-    let clock_edge = register.reg_clock_edge in
-    let reset_edge = register.reg_reset_edge in
-    let clear_level = register.reg_clear_level in
-    let%bind.Or_error clock = find register.reg_clock
-    and reset = map_empty register.reg_reset
-    and reset_value = map_empty register.reg_reset_value
-    and clear = map_empty register.reg_clear
-    and clear_value = map_empty register.reg_clear_value
-    and enable = map_empty register.reg_enable
+    let { Signal.Type.clock; clock_edge } = register.clock in
+    let%bind.Or_error clock = find clock
+    and reset, reset_edge, reset_to =
+      match register.reset with
+      | None -> Ok (None, Edge.Rising, None)
+      | Some { reset; reset_edge; reset_to } ->
+        let%bind.Or_error reset = find reset
+        and reset_to = find reset_to in
+        Ok (Some reset, reset_edge, Some reset_to)
+    and clear, clear_to =
+      match register.clear with
+      | None -> Ok (None, None)
+      | Some { clear; clear_to } ->
+        let%bind.Or_error clear = find clear
+        and clear_to = find clear_to in
+        Ok (Some clear, Some clear_to)
+    and enable = find_opt register.enable
     and d = find d in
     Ok
-      { name
-      ; clock
-      ; clock_edge
-      ; reset
-      ; reset_edge
-      ; reset_value
-      ; clear
-      ; clear_level
-      ; clear_value
-      ; enable
-      ; d
-      }
+      { name; clock; clock_edge; reset; reset_edge; reset_to; clear; clear_to; enable; d }
   ;;
 
   (* Create a map of all inputs, including the pseudo inputs for registers etc. *)
@@ -251,12 +247,10 @@ module Checkable_circuit = struct
       | Not { signal_id = _; arg } ->
         let%bind.Or_error arg = find arg in
         add (Comb_gates.( ~: ) arg)
-      | Wire { signal_id = _; driver } ->
-        if Signal.is_empty !driver
-        then Ok ready
-        else (
-          let%bind.Or_error driver = find !driver in
-          add driver)
+      | Wire { signal_id = _; driver = None } -> Ok ready
+      | Wire { signal_id = _; driver = Some driver } ->
+        let%bind.Or_error driver = find driver in
+        add driver
       | Select { signal_id = _; arg; high; low } ->
         let%bind.Or_error arg = find arg in
         add arg.Comb_gates.:[high, low]
@@ -338,8 +332,7 @@ module Pair = struct
   ;;
 
   let lift_errors { left; right } =
-    let%bind.Or_error left = left
-    and right = right in
+    let%bind.Or_error left and right in
     Ok { left; right }
   ;;
 
@@ -720,17 +713,6 @@ let compare_register (circuits : Checkable_circuit.sat Pair.t) (pair : Signal.t 
             (e : Edge.t Pair.t)
             ~name:(pair.left.name : string)]
   in
-  let check_level context (l : _ Pair.t) =
-    if Level.equal l.left l.right
-    then Ok ()
-    else
-      Or_error.error_s
-        [%message
-          "Level specifications do not match"
-            (context : string)
-            (l : Level.t Pair.t)
-            ~name:(pair.left.name : string)]
-  in
   let check_optional_signal context (s : _ Pair.t) =
     match s.left, s.right with
     | None, None -> Ok Comb_gates.vdd
@@ -743,16 +725,14 @@ let compare_register (circuits : Checkable_circuit.sat Pair.t) (pair : Signal.t 
   let%bind.Or_error () = check_edge "clock_edge" (field (fun d -> d.clock_edge))
   and reset = check_optional_signal "reset" (field (fun d -> d.reset))
   and () = check_edge "reset_edge" (field (fun d -> d.reset_edge))
-  and reset_value = check_optional_signal "reset_value" (field (fun d -> d.reset_value))
+  and reset_to = check_optional_signal "reset_to" (field (fun d -> d.reset_to))
   and clear = check_optional_signal "clear" (field (fun d -> d.clear))
-  and () = check_level "clear_level" (field (fun d -> d.clear_level))
-  and clear_value = check_optional_signal "clear_value" (field (fun d -> d.clear_value))
+  and clear_to = check_optional_signal "clear_to" (field (fun d -> d.clear_to))
   and enable = check_optional_signal "enable" (field (fun d -> d.enable)) in
   let d = eq (field (fun d -> d.d)) in
   Ok
     { name = pair.left.name
-    ; data =
-        Comb_gates.(clock &: reset &: reset_value &: clear &: clear_value &: enable &: d)
+    ; data = Comb_gates.(clock &: reset &: reset_to &: clear &: clear_to &: enable &: d)
     }
 ;;
 

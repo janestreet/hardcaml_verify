@@ -43,38 +43,32 @@ let%expect_test "retime" =
     -- registers
     VAR b0 : unsigned word [8];
     VAR a0 : unsigned word [8];
-    VAR _24 : unsigned word [8];
+    VAR _18 : unsigned word [8];
     VAR r0 : unsigned word [8];
     VAR r1 : unsigned word [8];
 
     -- combinatorial logic
-    DEFINE _23 := 0h8_00;
-    DEFINE _22 := 0h8_00;
-    DEFINE _19 := 0h8_00;
-    DEFINE _18 := 0h8_00;
-    DEFINE _16 := 0h8_00;
-    DEFINE _15 := 0h8_00;
-    DEFINE _21 := a0 + b0;
-    DEFINE _13 := 0h8_00;
+    DEFINE _17 := 0h8_00;
+    DEFINE _14 := 0h8_00;
     DEFINE _12 := 0h8_00;
-    DEFINE vdd := 0h1_1;
-    DEFINE _9 := 0h8_00;
+    DEFINE _16 := a0 + b0;
+    DEFINE _10 := 0h8_00;
     DEFINE _8 := 0h8_00;
     DEFINE _7 := a + b;
-    DEFINE _25 := word1(r1 = _24);
-    DEFINE prop := _25;
+    DEFINE _19 := word1(r1 = _18);
+    DEFINE prop := _19;
 
     -- register updates
     ASSIGN init(b0) := 0h8_00;
-    ASSIGN next(b0) := (bool(clear)?_19:b);
+    ASSIGN next(b0) := (bool(clear)?_14:b);
     ASSIGN init(a0) := 0h8_00;
-    ASSIGN next(a0) := (bool(clear)?_16:a);
-    ASSIGN init(_24) := 0h8_00;
-    ASSIGN next(_24) := (bool(clear)?_23:_21);
+    ASSIGN next(a0) := (bool(clear)?_12:a);
+    ASSIGN init(_18) := 0h8_00;
+    ASSIGN next(_18) := (bool(clear)?_17:_16);
     ASSIGN init(r0) := 0h8_00;
-    ASSIGN next(r0) := (bool(clear)?_9:_7);
+    ASSIGN next(r0) := (bool(clear)?_8:_7);
     ASSIGN init(r1) := 0h8_00;
-    ASSIGN next(r1) := (bool(clear)?_13:r0);
+    ASSIGN next(r1) := (bool(clear)?_10:r0);
 
     -- outputs
     DEFINE __ap_prop := prop;
@@ -105,16 +99,15 @@ let%expect_test "register output == register input at previous cycle, if enabled
     VAR clear : unsigned word [1];
 
     -- registers
-    VAR _12 : unsigned word [1];
+    VAR _11 : unsigned word [1];
 
     -- combinatorial logic
-    DEFINE _11 := 0h1_0;
     DEFINE _10 := 0h1_0;
-    DEFINE q := _12;
+    DEFINE q := _11;
 
     -- register updates
-    ASSIGN init(_12) := 0h1_0;
-    ASSIGN next(_12) := (bool(clear)?_11:(bool(enable)?d:_12));
+    ASSIGN init(_11) := 0h1_0;
+    ASSIGN next(_11) := (bool(clear)?_10:(bool(enable)?d:_11));
 
     -- outputs
     DEFINE __ap_clear := clear;
@@ -154,18 +147,17 @@ let%expect_test "Due to circuit rewriting, internal signals get new uids. If the
     VAR d : unsigned word [1];
 
     -- registers
-    VAR _13 : unsigned word [1];
+    VAR _12 : unsigned word [1];
 
     -- combinatorial logic
     DEFINE _9 := !clear;
     DEFINE _10 := _9 & enable;
-    DEFINE _12 := 0h1_0;
     DEFINE _11 := 0h1_0;
-    DEFINE q := _13;
+    DEFINE q := _12;
 
     -- register updates
-    ASSIGN init(_13) := 0h1_0;
-    ASSIGN next(_13) := (bool(clear)?_12:(bool(enable)?d:_13));
+    ASSIGN init(_12) := 0h1_0;
+    ASSIGN next(_12) := (bool(clear)?_11:(bool(enable)?d:_12));
 
     -- outputs
     DEFINE __ap_d := d;

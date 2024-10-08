@@ -259,7 +259,7 @@ module Checkable_circuit = struct
         Ok ready
       | Multiport_mem _ | Mem_read_port _ ->
         Or_error.error_s [%message "memories are not supported (yet)"]
-      | Inst { signal_id = _; extra_uid = _; instantiation = _ } -> Ok ready)
+      | Inst { signal_id = _; instantiation = _ } -> Ok ready)
   ;;
 
   (* compile each register *)

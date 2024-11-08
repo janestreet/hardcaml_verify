@@ -80,7 +80,12 @@ let write chan { circuit = circ; properties = props; atomic_propositions_map } =
     && (not (Circuit.is_output circ s))
     && not (Signal.equal s empty)
   in
-  let internal_signals = Signal_graph.filter (Circuit.signal_graph circ) ~f:is_internal in
+  let internal_signals =
+    Signal_graph.filter
+      ~deps:(module Signal_graph.Deps_without_case_matches)
+      (Circuit.signal_graph circ)
+      ~f:is_internal
+  in
   let internal_signals, registers =
     List.partition_tf internal_signals ~f:(function
       | Reg _ -> false
@@ -100,6 +105,14 @@ let write chan { circuit = circ; properties = props; atomic_propositions_map } =
   in
   let const s = const' (width s) (Type.const_value s |> Bits.to_bstr) in
   let consti w i = const' w (Constant.of_int ~width:w i |> Constant.to_binary_string) in
+  let const_string_of_const const =
+    let width = Constant.width const in
+    let hex = Constant.to_hex_string ~signedness:Unsigned const in
+    [%string "0h%{width#Int}_%{hex}"]
+  in
+  let const_string_of_bits bits = const_string_of_const (Bits.to_constant bits) in
+  let const_string_of_signal signal = const_string_of_const (Signal.to_constant signal) in
+  let const_string_of_int ~width i = const_string_of_bits (Bits.of_int ~width i) in
   let sel s h l = name s ^ "[" ^ Int.to_string h ^ ":" ^ Int.to_string l ^ "]" in
   let define s x =
     os "DEFINE ";
@@ -107,6 +120,32 @@ let write chan { circuit = circ; properties = props; atomic_propositions_map } =
     os " := ";
     os x;
     os ";\n"
+  in
+  let output_cases dst select cases =
+    os "DEFINE ";
+    os (name dst);
+    os " := \n";
+    os "  case\n";
+    let select = name select in
+    let rec f n = function
+      | [] -> ()
+      | `Default value :: tl ->
+        os "    TRUE: ";
+        os (name value);
+        os ";\n";
+        f (n + 1) tl
+      | `Match (match_with, value) :: tl ->
+        os "    ";
+        os select;
+        os "=";
+        os match_with;
+        os ": ";
+        os (name value);
+        os ";\n";
+        f (n + 1) tl
+    in
+    f 0 cases;
+    os "  esac;\n"
   in
   os "MODULE main\n";
   os "\n-- inputs\n";
@@ -119,11 +158,12 @@ let write chan { circuit = circ; properties = props; atomic_propositions_map } =
   let define s =
     match s with
     | Type.Empty -> failwith "NuSMV - unexpected empty signal"
+    | Wire { driver = None; _ } -> failwith "NuSMV - unexpected undriven wire"
     | Inst _ -> failwith "NuSMV - instantiation not supported"
     | Reg _ | Multiport_mem _ | Mem_read_port _ ->
       failwith "NuSMV error - reg or mem not expected here"
     | Const _ -> define s (const s)
-    | Wire { driver; _ } -> define s (name !driver)
+    | Wire { driver = Some driver; _ } -> define s (name driver)
     | Select { arg; high; low; _ } -> define s (sel arg high low)
     | Not { arg; _ } ->
       let not_ _ = "!" ^ name arg in
@@ -132,33 +172,21 @@ let write chan { circuit = circ; properties = props; atomic_propositions_map } =
       let cat = String.concat ~sep:"::" (List.map args ~f:name) in
       define s cat
     | Mux { select; cases; _ } ->
-      let mux _ =
-        os "DEFINE ";
-        os (name s);
-        os " := \n";
-        os "  case\n";
-        let nsel = name select in
-        let rec f n = function
-          | [] -> ()
-          | [ a ] ->
-            os "    TRUE: ";
-            os (name a);
-            os ";\n"
-          | h :: t ->
-            let w = width select in
-            os "    ";
-            os nsel;
-            os "=";
-            os (consti w n);
-            os ": ";
-            os (name h);
-            os ";\n";
-            f (n + 1) t
-        in
-        f 0 cases;
-        os "  esac;\n"
-      in
-      mux s
+      let num_cases = List.length cases in
+      output_cases
+        s
+        select
+        (List.mapi cases ~f:(fun idx case ->
+           if idx = num_cases - 1
+           then `Default case
+           else `Match (const_string_of_int ~width:(width select) idx, case)))
+    | Cases { select; cases; default; _ } ->
+      output_cases
+        s
+        select
+        (List.map cases ~f:(fun (match_with, value) ->
+           `Match (const_string_of_signal match_with, value))
+         @ [ `Default default ])
     | Op2 { op; arg_a; arg_b; _ } ->
       let op2 op _ = name arg_a ^ op ^ name arg_b in
       let wrap s t = s ^ "(" ^ t ^ ")" in
@@ -189,48 +217,55 @@ let write chan { circuit = circ; properties = props; atomic_propositions_map } =
   in
   List.iter internal_signals ~f:define;
   os "\n-- register updates\n";
-  List.iter registers ~f:(fun s ->
-    match s with
-    | Reg { register = r; d = din; _ } ->
-      let next s =
-        let mux2 s t f = "(bool(" ^ s ^ ")?" ^ t ^ ":" ^ f ^ ")" in
-        let mux2_enable s t f =
-          if Signal.is_empty s || Signal.is_vdd s
-          then t
-          else if Signal.is_gnd s
-          then f
-          else mux2 (name s) t f
+  List.iter registers ~f:(fun current ->
+    match current with
+    | Reg { register; d; _ } ->
+      let next =
+        let mux2 sel on_true on_false =
+          "(bool(" ^ sel ^ ")?" ^ on_true ^ ":" ^ on_false ^ ")"
         in
-        let mux2_clear s t f =
-          if Signal.is_vdd s
-          then t
-          else if Signal.is_empty s || Signal.is_gnd s
-          then f
-          else mux2 (name s) t f
+        let nxt =
+          let d = name d in
+          Option.value_map register.enable ~default:d ~f:(fun enable ->
+            mux2 (name enable) d (name current))
         in
-        let mux2_reset s (e : Edge.t) t f =
-          if Signal.is_empty s
-          then f
-          else (
-            match e with
-            | Rising -> mux2 (name s) t f
-            | Falling -> mux2 (name s) f t)
+        let nxt =
+          Option.value_map register.clear ~default:nxt ~f:(fun { clear; clear_to } ->
+            mux2 (name clear) (name clear_to) nxt)
         in
-        let nxt = mux2_enable r.enable (name din) (name s) in
-        let nxt = mux2_clear r.spec.clear (name r.clear_to) nxt in
-        let nxt = mux2_reset r.spec.reset r.spec.reset_edge (name r.reset_to) nxt in
+        let nxt =
+          Option.value_map
+            register.reset
+            ~default:nxt
+            ~f:(fun { reset; reset_edge; reset_to } ->
+              match reset_edge with
+              | Rising -> mux2 (name reset) (name reset_to) nxt
+              | Falling -> mux2 (name reset) nxt (name reset_to))
+        in
         nxt
       in
-      let init s =
-        if Signal.is_empty r.spec.reset
-        then
-          if Signal.is_empty r.reset_to
-          then consti (width s) 0 (* default to zero *)
-          else const r.reset_to (* treat as a default value *)
-        else const r.reset_to
+      let init =
+        (* Choose
+
+           - reset value
+           - initial value
+           - or zeros
+
+           in that order for the initial value of the register.
+        *)
+        let default =
+          Option.value_map
+            register.initialize_to
+            ~default:(consti (width current) 0)
+            ~f:(fun initial -> const initial)
+        in
+        Option.value_map
+          register.reset
+          ~default
+          ~f:(fun { reset = _; reset_edge = _; reset_to } -> const reset_to)
       in
-      os ("ASSIGN init(" ^ name s ^ ") := " ^ init s ^ ";\n");
-      os ("ASSIGN next(" ^ name s ^ ") := " ^ next s ^ ";\n")
+      os ("ASSIGN init(" ^ name current ^ ") := " ^ init ^ ";\n");
+      os ("ASSIGN next(" ^ name current ^ ") := " ^ next ^ ";\n")
     | _ -> failwith "NuSMV - expecting a register");
   os "\n-- outputs\n";
   List.iter outputs ~f:define;

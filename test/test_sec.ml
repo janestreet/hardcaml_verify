@@ -156,19 +156,24 @@ let%expect_test "show different clocks are detected" =
 
 let test_spec1 () =
   let spec =
-    Reg_spec.(
-      override (create ~clock:(input "clock" 1) ()) ~clock_edge:Rising ~reset_edge:Rising)
+    Reg_spec.create
+      ~clock:(input "clock" 1)
+      ~reset:(input "reset" 1)
+      ~clock_edge:Rising
+      ~reset_edge:Rising
+      ()
   in
   Circuit.create_exn ~name:"foo" [ output "x" (reg spec (input "a" 2) -- "reg1") ]
 ;;
 
 let test_spec2 () =
   let spec =
-    Reg_spec.(
-      override
-        (create ~clock:(input "clock" 1) ())
-        ~clock_edge:Falling
-        ~reset_edge:Falling)
+    Reg_spec.create
+      ~clock:(input "clock" 1)
+      ~reset:(input "reset" 1)
+      ~clock_edge:Falling
+      ~reset_edge:Falling
+      ()
   in
   Circuit.create_exn ~name:"foo" [ output "x" (reg spec (input "a" 2) -- "reg1") ]
 ;;
@@ -465,12 +470,7 @@ let%expect_test "instantiation input port width mismatch" =
               (parameters ())
               (inputs  ((a cat)))
               (outputs ((b 1))))))))
-        (unmatched_on_left ((
-          a (
-            wire
-            (names (x))
-            (width   1)
-            (data_in empty)))))
+        (unmatched_on_left ((a (wire (names (x)) (width 1)))))
         (unmatched_on_right ((a (cat (width 2) (arguments (x x)))))))))
     |}]
 ;;

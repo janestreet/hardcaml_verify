@@ -43,38 +43,32 @@ let%expect_test "retime" =
     -- registers
     VAR b0 : unsigned word [8];
     VAR a0 : unsigned word [8];
-    VAR _24 : unsigned word [8];
+    VAR _18 : unsigned word [8];
     VAR r0 : unsigned word [8];
     VAR r1 : unsigned word [8];
 
     -- combinatorial logic
-    DEFINE _23 := 0h8_00;
-    DEFINE _22 := 0h8_00;
-    DEFINE _19 := 0h8_00;
-    DEFINE _18 := 0h8_00;
-    DEFINE _16 := 0h8_00;
-    DEFINE _15 := 0h8_00;
-    DEFINE _21 := a0 + b0;
-    DEFINE _13 := 0h8_00;
+    DEFINE _17 := 0h8_00;
+    DEFINE _14 := 0h8_00;
     DEFINE _12 := 0h8_00;
-    DEFINE vdd := 0h1_1;
-    DEFINE _9 := 0h8_00;
+    DEFINE _16 := a0 + b0;
+    DEFINE _10 := 0h8_00;
     DEFINE _8 := 0h8_00;
     DEFINE _7 := a + b;
-    DEFINE _25 := word1(r1 = _24);
-    DEFINE prop := _25;
+    DEFINE _19 := word1(r1 = _18);
+    DEFINE prop := _19;
 
     -- register updates
     ASSIGN init(b0) := 0h8_00;
-    ASSIGN next(b0) := (bool(clear)?_19:b);
+    ASSIGN next(b0) := (bool(clear)?_14:b);
     ASSIGN init(a0) := 0h8_00;
-    ASSIGN next(a0) := (bool(clear)?_16:a);
-    ASSIGN init(_24) := 0h8_00;
-    ASSIGN next(_24) := (bool(clear)?_23:_21);
+    ASSIGN next(a0) := (bool(clear)?_12:a);
+    ASSIGN init(_18) := 0h8_00;
+    ASSIGN next(_18) := (bool(clear)?_17:_16);
     ASSIGN init(r0) := 0h8_00;
-    ASSIGN next(r0) := (bool(clear)?_9:_7);
+    ASSIGN next(r0) := (bool(clear)?_8:_7);
     ASSIGN init(r1) := 0h8_00;
-    ASSIGN next(r1) := (bool(clear)?_13:r0);
+    ASSIGN next(r1) := (bool(clear)?_10:r0);
 
     -- outputs
     DEFINE __ap_prop := prop;
@@ -105,16 +99,15 @@ let%expect_test "register output == register input at previous cycle, if enabled
     VAR clear : unsigned word [1];
 
     -- registers
-    VAR _12 : unsigned word [1];
+    VAR _11 : unsigned word [1];
 
     -- combinatorial logic
-    DEFINE _11 := 0h1_0;
     DEFINE _10 := 0h1_0;
-    DEFINE q := _12;
+    DEFINE q := _11;
 
     -- register updates
-    ASSIGN init(_12) := 0h1_0;
-    ASSIGN next(_12) := (bool(clear)?_11:(bool(enable)?d:_12));
+    ASSIGN init(_11) := 0h1_0;
+    ASSIGN next(_11) := (bool(clear)?_10:(bool(enable)?d:_11));
 
     -- outputs
     DEFINE __ap_clear := clear;
@@ -128,7 +121,7 @@ let%expect_test "register output == register input at previous cycle, if enabled
 ;;
 
 let%expect_test "Due to circuit rewriting, internal signals get new uids. If they were \
-                 not named, the propery generation code would not work correctly. This \
+                 not named, the property generation code would not work correctly. This \
                  is now fixed and the following works - in particular the expression to \
                  create the clear/enable logic can not be done in hardcaml and doesn't \
                  need to be lifted into the temporal logic."
@@ -154,18 +147,17 @@ let%expect_test "Due to circuit rewriting, internal signals get new uids. If the
     VAR d : unsigned word [1];
 
     -- registers
-    VAR _13 : unsigned word [1];
+    VAR _12 : unsigned word [1];
 
     -- combinatorial logic
     DEFINE _9 := !clear;
     DEFINE _10 := _9 & enable;
-    DEFINE _12 := 0h1_0;
     DEFINE _11 := 0h1_0;
-    DEFINE q := _13;
+    DEFINE q := _12;
 
     -- register updates
-    ASSIGN init(_13) := 0h1_0;
-    ASSIGN next(_13) := (bool(clear)?_12:(bool(enable)?d:_13));
+    ASSIGN init(_12) := 0h1_0;
+    ASSIGN next(_12) := (bool(clear)?_11:(bool(enable)?d:_12));
 
     -- outputs
     DEFINE __ap_d := d;
@@ -174,5 +166,118 @@ let%expect_test "Due to circuit rewriting, internal signals get new uids. If the
 
     -- SPECS
     LTLSPEC (G ((!bool(__ap_1)) | (!((bool(__ap_d) & (!(X bool(__ap_q)))) | ((!bool(__ap_d)) & (X bool(__ap_q)))))));
+    |}]
+;;
+
+let%expect_test "muxs" =
+  let module P = Property.LTL in
+  let sel = input "sel" 2 in
+  let d = List.init 4 ~f:(fun i -> input [%string "d%{i#Int}"] 4) in
+  let q = mux sel d in
+  let prop = P.(g (p (q ==:. 0))) in
+  let nusmv = Nusmv.create ~name:"foo" [ LTL prop ] in
+  Nusmv.write Stdio.stdout nusmv;
+  [%expect
+    {|
+    MODULE main
+
+    -- inputs
+    VAR d3 : unsigned word [4];
+    VAR d2 : unsigned word [4];
+    VAR d1 : unsigned word [4];
+    VAR d0 : unsigned word [4];
+    VAR sel : unsigned word [2];
+
+    -- registers
+
+    -- combinatorial logic
+    DEFINE _8 := 0h4_0;
+    DEFINE _7 :=
+      case
+        sel=0h2_0: d0;
+        sel=0h2_1: d1;
+        sel=0h2_2: d2;
+        TRUE: d3;
+      esac;
+    DEFINE _9 := word1(_7 = _8);
+
+    -- register updates
+
+    -- outputs
+    DEFINE __ap_1 := _9;
+
+    -- SPECS
+    LTLSPEC (G bool(__ap_1));
+    |}]
+;;
+
+let%expect_test "cases" =
+  let module P = Property.LTL in
+  let q =
+    cases
+      ~default:(input "default" 8)
+      (input "select" 32)
+      (List.init 16 ~f:(fun i -> random ~width:32, input [%string "v%{i#Int}"] 8))
+  in
+  let prop = P.(g (p (q ==:. 0))) in
+  let nusmv = Nusmv.create ~name:"foo" [ LTL prop ] in
+  Nusmv.write Stdio.stdout nusmv;
+  [%expect
+    {|
+    MODULE main
+
+    -- inputs
+    VAR default : unsigned word [8];
+    VAR v15 : unsigned word [8];
+    VAR v14 : unsigned word [8];
+    VAR v13 : unsigned word [8];
+    VAR v12 : unsigned word [8];
+    VAR v11 : unsigned word [8];
+    VAR v10 : unsigned word [8];
+    VAR v9 : unsigned word [8];
+    VAR v8 : unsigned word [8];
+    VAR v7 : unsigned word [8];
+    VAR v6 : unsigned word [8];
+    VAR v5 : unsigned word [8];
+    VAR v4 : unsigned word [8];
+    VAR v3 : unsigned word [8];
+    VAR v2 : unsigned word [8];
+    VAR v1 : unsigned word [8];
+    VAR v0 : unsigned word [8];
+    VAR select : unsigned word [32];
+
+    -- registers
+
+    -- combinatorial logic
+    DEFINE _37 := 0h8_00;
+    DEFINE _36 :=
+      case
+        select=0h32_0bd44b2d: v0;
+        select=0h32_3f664094: v1;
+        select=0h32_e8316bb2: v2;
+        select=0h32_ffa8e768: v3;
+        select=0h32_24c87e26: v4;
+        select=0h32_386f7da0: v5;
+        select=0h32_25177962: v6;
+        select=0h32_233fa986: v7;
+        select=0h32_7f3d252a: v8;
+        select=0h32_efac79a0: v9;
+        select=0h32_498cda36: v10;
+        select=0h32_05e8cd61: v11;
+        select=0h32_8ced26fc: v12;
+        select=0h32_e20f2a93: v13;
+        select=0h32_4e8ec765: v14;
+        select=0h32_98f8d4c3: v15;
+        TRUE: default;
+      esac;
+    DEFINE _38 := word1(_36 = _37);
+
+    -- register updates
+
+    -- outputs
+    DEFINE __ap_1 := _38;
+
+    -- SPECS
+    LTLSPEC (G bool(__ap_1));
     |}]
 ;;

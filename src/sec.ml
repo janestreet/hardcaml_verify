@@ -146,21 +146,30 @@ module Checkable_circuit = struct
           [%message
             "[Sec.register_outputs] failed to lookup input to register" (s : Signal.t)]
     in
-    let map_empty s =
-      if Signal.is_empty s
-      then Ok None
-      else (
+    let find_opt s =
+      match s with
+      | None -> Ok None
+      | Some s ->
         let%bind.Or_error s = find s in
-        Ok (Some s))
+        Ok (Some s)
     in
-    let clock_edge = register.spec.clock_edge in
-    let reset_edge = register.spec.reset_edge in
-    let%bind.Or_error clock = find register.spec.clock
-    and reset = map_empty register.spec.reset
-    and reset_to = map_empty register.reset_to
-    and clear = map_empty register.spec.clear
-    and clear_to = map_empty register.clear_to
-    and enable = map_empty register.enable
+    let { Signal.Type.clock; clock_edge } = register.clock in
+    let%bind.Or_error clock = find clock
+    and reset, reset_edge, reset_to =
+      match register.reset with
+      | None -> Ok (None, Edge.Rising, None)
+      | Some { reset; reset_edge; reset_to } ->
+        let%bind.Or_error reset = find reset
+        and reset_to = find reset_to in
+        Ok (Some reset, reset_edge, Some reset_to)
+    and clear, clear_to =
+      match register.clear with
+      | None -> Ok (None, None)
+      | Some { clear; clear_to } ->
+        let%bind.Or_error clear = find clear
+        and clear_to = find clear_to in
+        Ok (Some clear, Some clear_to)
+    and enable = find_opt register.enable
     and d = find d in
     Ok
       { name; clock; clock_edge; reset; reset_edge; reset_to; clear; clear_to; enable; d }
@@ -232,18 +241,27 @@ module Checkable_circuit = struct
         let%bind.Or_error select = find select in
         let%bind.Or_error cases = Or_error.all (List.map cases ~f:find) in
         add (Comb_gates.mux select cases)
+      | Cases { signal_id = _; select; cases; default } ->
+        let%bind.Or_error select = find select in
+        let%bind.Or_error default = find default in
+        let%bind.Or_error cases =
+          Or_error.all
+            (List.map cases ~f:(fun (match_with, value) ->
+               let%bind.Or_error match_with = find match_with in
+               let%map.Or_error value = find value in
+               match_with, value))
+        in
+        add (Comb_gates.cases ~default select cases)
       | Cat { signal_id = _; args } ->
         let%bind.Or_error args = Or_error.all (List.map args ~f:find) in
         add (Comb_gates.concat_msb args)
       | Not { signal_id = _; arg } ->
         let%bind.Or_error arg = find arg in
         add (Comb_gates.( ~: ) arg)
-      | Wire { signal_id = _; driver } ->
-        if Signal.is_empty !driver
-        then Ok ready
-        else (
-          let%bind.Or_error driver = find !driver in
-          add driver)
+      | Wire { signal_id = _; driver = None } -> Ok ready
+      | Wire { signal_id = _; driver = Some driver } ->
+        let%bind.Or_error driver = find driver in
+        add driver
       | Select { signal_id = _; arg; high; low } ->
         let%bind.Or_error arg = find arg in
         add arg.Comb_gates.:[high, low]
@@ -252,7 +270,7 @@ module Checkable_circuit = struct
         Ok ready
       | Multiport_mem _ | Mem_read_port _ ->
         Or_error.error_s [%message "memories are not supported (yet)"]
-      | Inst { signal_id = _; extra_uid = _; instantiation = _ } -> Ok ready)
+      | Inst { signal_id = _; instantiation = _ } -> Ok ready)
   ;;
 
   (* compile each register *)

@@ -241,6 +241,17 @@ module Checkable_circuit = struct
         let%bind.Or_error select = find select in
         let%bind.Or_error cases = Or_error.all (List.map cases ~f:find) in
         add (Comb_gates.mux select cases)
+      | Cases { signal_id = _; select; cases; default } ->
+        let%bind.Or_error select = find select in
+        let%bind.Or_error default = find default in
+        let%bind.Or_error cases =
+          Or_error.all
+            (List.map cases ~f:(fun (match_with, value) ->
+               let%bind.Or_error match_with = find match_with in
+               let%map.Or_error value = find value in
+               match_with, value))
+        in
+        add (Comb_gates.cases ~default select cases)
       | Cat { signal_id = _; args } ->
         let%bind.Or_error args = Or_error.all (List.map args ~f:find) in
         add (Comb_gates.concat_msb args)

@@ -80,7 +80,12 @@ let write chan { circuit = circ; properties = props; atomic_propositions_map } =
     && (not (Circuit.is_output circ s))
     && not (Signal.equal s empty)
   in
-  let internal_signals = Signal_graph.filter (Circuit.signal_graph circ) ~f:is_internal in
+  let internal_signals =
+    Signal_graph.filter
+      ~deps:(module Signal_graph.Deps_without_case_matches)
+      (Circuit.signal_graph circ)
+      ~f:is_internal
+  in
   let internal_signals, registers =
     List.partition_tf internal_signals ~f:(function
       | Reg _ -> false
@@ -100,6 +105,14 @@ let write chan { circuit = circ; properties = props; atomic_propositions_map } =
   in
   let const s = const' (width s) (Type.const_value s |> Bits.to_bstr) in
   let consti w i = const' w (Constant.of_int ~width:w i |> Constant.to_binary_string) in
+  let const_string_of_const const =
+    let width = Constant.width const in
+    let hex = Constant.to_hex_string ~signedness:Unsigned const in
+    [%string "0h%{width#Int}_%{hex}"]
+  in
+  let const_string_of_bits bits = const_string_of_const (Bits.to_constant bits) in
+  let const_string_of_signal signal = const_string_of_const (Signal.to_constant signal) in
+  let const_string_of_int ~width i = const_string_of_bits (Bits.of_int ~width i) in
   let sel s h l = name s ^ "[" ^ Int.to_string h ^ ":" ^ Int.to_string l ^ "]" in
   let define s x =
     os "DEFINE ";
@@ -107,6 +120,32 @@ let write chan { circuit = circ; properties = props; atomic_propositions_map } =
     os " := ";
     os x;
     os ";\n"
+  in
+  let output_cases dst select cases =
+    os "DEFINE ";
+    os (name dst);
+    os " := \n";
+    os "  case\n";
+    let select = name select in
+    let rec f n = function
+      | [] -> ()
+      | `Default value :: tl ->
+        os "    TRUE: ";
+        os (name value);
+        os ";\n";
+        f (n + 1) tl
+      | `Match (match_with, value) :: tl ->
+        os "    ";
+        os select;
+        os "=";
+        os match_with;
+        os ": ";
+        os (name value);
+        os ";\n";
+        f (n + 1) tl
+    in
+    f 0 cases;
+    os "  esac;\n"
   in
   os "MODULE main\n";
   os "\n-- inputs\n";
@@ -133,33 +172,21 @@ let write chan { circuit = circ; properties = props; atomic_propositions_map } =
       let cat = String.concat ~sep:"::" (List.map args ~f:name) in
       define s cat
     | Mux { select; cases; _ } ->
-      let mux _ =
-        os "DEFINE ";
-        os (name s);
-        os " := \n";
-        os "  case\n";
-        let nsel = name select in
-        let rec f n = function
-          | [] -> ()
-          | [ a ] ->
-            os "    TRUE: ";
-            os (name a);
-            os ";\n"
-          | h :: t ->
-            let w = width select in
-            os "    ";
-            os nsel;
-            os "=";
-            os (consti w n);
-            os ": ";
-            os (name h);
-            os ";\n";
-            f (n + 1) t
-        in
-        f 0 cases;
-        os "  esac;\n"
-      in
-      mux s
+      let num_cases = List.length cases in
+      output_cases
+        s
+        select
+        (List.mapi cases ~f:(fun idx case ->
+           if idx = num_cases - 1
+           then `Default case
+           else `Match (const_string_of_int ~width:(width select) idx, case)))
+    | Cases { select; cases; default; _ } ->
+      output_cases
+        s
+        select
+        (List.map cases ~f:(fun (match_with, value) ->
+           `Match (const_string_of_signal match_with, value))
+         @ [ `Default default ])
     | Op2 { op; arg_a; arg_b; _ } ->
       let op2 op _ = name arg_a ^ op ^ name arg_b in
       let wrap s t = s ^ "(" ^ t ^ ")" in

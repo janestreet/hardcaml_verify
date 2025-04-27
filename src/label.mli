@@ -3,8 +3,7 @@
 
     We need to represent vectors, even though the core variable type is a single bit. As
     such labels also refer to their bit position. The pair [(uid,bit_pos)] is used for
-    comparison in order to distinguish labels.
-*)
+    comparison in order to distinguish labels. *)
 
 open Base
 module Uid : Uid.S

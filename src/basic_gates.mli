@@ -43,8 +43,7 @@ val shannon_expansion : t -> f:t -> t
 (** Gate inputs *)
 val deps : t -> t list
 
-(** Visit all nodes in the list of functions and call [f]. Nodes are visited once only.
-*)
+(** Visit all nodes in the list of functions and call [f]. Nodes are visited once only. *)
 val depth_first_search : t list -> init:'a -> f:('a -> t -> 'a) -> 'a
 
 (** Create CNF for each given equation. In the resulting CNF the equations are logically

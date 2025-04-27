@@ -8,7 +8,7 @@ end
 
 (** Conversion functions from boolean gates to Tseitin form. The first argument to each
     function is the newly introduced sat literal for this gate, which should be referenced
-    by its fanouts.  The return value is the corresponding CNF. *)
+    by its fanouts. The return value is the corresponding CNF. *)
 module Make (B : S) : sig
   open B
 

@@ -1,5 +1,6 @@
 open Base
 open Stdio
+module Config = Hardcaml.Tools_config
 
 type run_solver = dimacs_in:string -> result_out:string -> unit -> unit Or_error.t
 

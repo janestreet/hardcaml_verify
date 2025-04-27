@@ -27,9 +27,11 @@ let retimer () =
   output "prop" (retime0 a b ==: retime1 a b)
 ;;
 
+let print nusmv = Nusmv.to_rope nusmv |> Rope.to_string |> Stdio.Out_channel.print_string
+
 let%expect_test "retime" =
   let nusmv = Nusmv.create ~name:"retime" [ LTL Property.LTL.(g (p (retimer ()))) ] in
-  Nusmv.write Stdio.stdout nusmv;
+  print nusmv;
   [%expect
     {|
     MODULE main
@@ -87,7 +89,7 @@ let%expect_test "register output == register input at previous cycle, if enabled
   let d_is_next_q = P.(p d ==: X (p q)) in
   let prop = P.(g (~:(p clear) &: p enable ==>: d_is_next_q)) in
   let nusmv = Nusmv.create ~name:"retime" [ LTL prop ] in
-  Nusmv.write Stdio.stdout nusmv;
+  print nusmv;
   [%expect
     {|
     MODULE main
@@ -135,7 +137,7 @@ let%expect_test "Due to circuit rewriting, internal signals get new uids. If the
   let not_clear_and_enable = ~:clear &: enable in
   let prop = P.(g (p not_clear_and_enable ==>: d_is_next_q)) in
   let nusmv = Nusmv.create ~name:"retime" [ LTL prop ] in
-  Nusmv.write Stdio.stdout nusmv;
+  print nusmv;
   [%expect
     {|
     MODULE main
@@ -176,7 +178,7 @@ let%expect_test "muxs" =
   let q = mux sel d in
   let prop = P.(g (p (q ==:. 0))) in
   let nusmv = Nusmv.create ~name:"foo" [ LTL prop ] in
-  Nusmv.write Stdio.stdout nusmv;
+  print nusmv;
   [%expect
     {|
     MODULE main
@@ -221,7 +223,7 @@ let%expect_test "cases" =
   in
   let prop = P.(g (p (q ==:. 0))) in
   let nusmv = Nusmv.create ~name:"foo" [ LTL prop ] in
-  Nusmv.write Stdio.stdout nusmv;
+  print nusmv;
   [%expect
     {|
     MODULE main

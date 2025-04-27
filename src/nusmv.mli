@@ -17,15 +17,14 @@ type t [@@deriving sexp_of]
 
     The important part of the circuit is traced back from the [atomic_propositions].
     However, it is possible to include the complete circuit if required by passing
-    [outputs].
-*)
+    [outputs]. *)
 val create : ?outputs:Signal.t list -> name:string -> property list -> t
 
 (** Return the circuit generated for the NuSMV model. *)
 val circuit : t -> Circuit.t
 
-(** Write the NuSMV model to a file. *)
-val write : Stdio.Out_channel.t -> t -> unit
+(** Generate the NuSMV model. *)
+val to_rope : t -> Rope.t
 
 module Counter_example_trace : sig
   type t [@@deriving sexp_of]

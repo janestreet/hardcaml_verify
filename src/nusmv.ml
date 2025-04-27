@@ -10,7 +10,7 @@ type property =
 type t =
   { circuit : Circuit.t
   ; properties : property list
-  ; atomic_propositions_map : Signal.t Map.M(Signal.Uid).t
+  ; atomic_propositions_map : Signal.t Map.M(Signal.Type.Uid).t
   }
 [@@deriving sexp_of, fields ~getters]
 
@@ -19,7 +19,7 @@ let create ?(outputs = []) ~name properties =
     module T = struct
       type t = Signal.t [@@deriving sexp_of]
 
-      let compare a b = Uid.compare (uid a) (uid b)
+      let compare a b = Signal.Type.Uid.compare (uid a) (uid b)
     end
 
     include T
@@ -58,7 +58,7 @@ let create ?(outputs = []) ~name properties =
         (List.concat [ List.map atomic_propositions ~f:snd; outputs ])
   ; properties
   ; atomic_propositions_map =
-      (match Map.of_alist (module Signal.Uid) atomic_propositions with
+      (match Map.of_alist (module Signal.Type.Uid) atomic_propositions with
        | `Duplicate_key _ ->
          raise_s [%message "Failed to construct atomic propositions output map"]
        | `Ok m -> m)
@@ -72,8 +72,7 @@ let of_circuit ?(outputs = false) circuit properties =
     properties
 ;;
 
-let write chan { circuit = circ; properties = props; atomic_propositions_map } =
-  let os = Stdio.Out_channel.output_string chan in
+let to_rope { circuit = circ; properties = props; atomic_propositions_map } =
   let inputs, outputs = Circuit.inputs circ, Circuit.outputs circ in
   let is_internal s =
     (not (Circuit.is_input circ s))
@@ -93,83 +92,45 @@ let write chan { circuit = circ; properties = props; atomic_propositions_map } =
   in
   let name s =
     match List.hd (names s) with
-    | Some x -> x
-    | None -> "_" ^ Signal.Uid.to_string (uid s)
+    | Some x -> [%rope "%{x#String}"]
+    | None -> [%rope "_%{(uid s)#Signal.Type.Uid}"]
   in
-  let word_spec s = "unsigned word [" ^ Int.to_string (width s) ^ "]" in
-  let const' w s =
-    "0h"
-    ^ Int.to_string w
-    ^ "_"
-    ^ (Constant.of_binary_string s |> Constant.to_hex_string ~signedness:Unsigned)
-  in
-  let const s = const' (width s) (Type.const_value s |> Bits.to_bstr) in
-  let consti w i = const' w (Constant.of_int ~width:w i |> Constant.to_binary_string) in
+  let word_spec s = [%rope "unsigned word [%{(width s)#Int}]"] in
   let const_string_of_const const =
     let width = Constant.width const in
     let hex = Constant.to_hex_string ~signedness:Unsigned const in
-    [%string "0h%{width#Int}_%{hex}"]
+    [%rope "0h%{width#Int}_%{hex#String}"]
   in
   let const_string_of_bits bits = const_string_of_const (Bits.to_constant bits) in
   let const_string_of_signal signal = const_string_of_const (Signal.to_constant signal) in
-  let const_string_of_int ~width i = const_string_of_bits (Bits.of_int ~width i) in
-  let sel s h l = name s ^ "[" ^ Int.to_string h ^ ":" ^ Int.to_string l ^ "]" in
-  let define s x =
-    os "DEFINE ";
-    os (name s);
-    os " := ";
-    os x;
-    os ";\n"
-  in
+  let const_string_of_int ~width i = const_string_of_bits (Bits.of_int_trunc ~width i) in
+  let sel s h l = [%rope "%{name s}[%{h#Int}:%{l#Int}]"] in
+  let define s x = [%rope "DEFINE %{name s} := %{x};\n"] in
   let output_cases dst select cases =
-    os "DEFINE ";
-    os (name dst);
-    os " := \n";
-    os "  case\n";
     let select = name select in
     let rec f n = function
-      | [] -> ()
-      | `Default value :: tl ->
-        os "    TRUE: ";
-        os (name value);
-        os ";\n";
-        f (n + 1) tl
+      | [] -> Rope.empty
+      | `Default value :: tl -> [%rope "    TRUE: %{name value};\n%{f (n+1) tl}"]
       | `Match (match_with, value) :: tl ->
-        os "    ";
-        os select;
-        os "=";
-        os match_with;
-        os ": ";
-        os (name value);
-        os ";\n";
-        f (n + 1) tl
+        [%rope "    %{select}=%{match_with}: %{name value};\n%{f (n+1) tl}"]
     in
-    f 0 cases;
-    os "  esac;\n"
+    [%rope "DEFINE %{name dst} := \n  case\n%{f 0 cases}  esac;\n"]
   in
-  os "MODULE main\n";
-  os "\n-- inputs\n";
-  List.iter inputs ~f:(fun s -> os ("VAR " ^ name s ^ " : " ^ word_spec s ^ ";\n"));
-  os "\n-- registers\n";
-  List.iter registers ~f:(fun s -> os ("VAR " ^ name s ^ " : " ^ word_spec s ^ ";\n"));
-  (* os ("-- memories\n"); *)
-  (* simple naming *)
-  os "\n-- combinatorial logic\n";
-  let define s =
+  let comb s =
     match s with
-    | Type.Empty -> failwith "NuSMV - unexpected empty signal"
-    | Wire { driver = None; _ } -> failwith "NuSMV - unexpected undriven wire"
-    | Inst _ -> failwith "NuSMV - instantiation not supported"
+    | Type.Empty -> raise_s [%message "NuSMV - unexpected empty signal"]
+    | Wire { driver = None; _ } -> raise_s [%message "NuSMV - unexpected undriven wire"]
+    | Inst _ -> raise_s [%message "NuSMV - instantiation not supported"]
     | Reg _ | Multiport_mem _ | Mem_read_port _ ->
-      failwith "NuSMV error - reg or mem not expected here"
-    | Const _ -> define s (const s)
+      raise_s [%message "NuSMV error - reg or mem not expected here"]
+    | Const _ -> define s (const_string_of_signal s)
     | Wire { driver = Some driver; _ } -> define s (name driver)
     | Select { arg; high; low; _ } -> define s (sel arg high low)
     | Not { arg; _ } ->
-      let not_ _ = "!" ^ name arg in
+      let not_ _ = [%rope "!%{name arg}"] in
       define s (not_ s)
     | Cat { args; _ } ->
-      let cat = String.concat ~sep:"::" (List.map args ~f:name) in
+      let cat = Rope.concat ~sep:[%rope "::"] (List.map args ~f:name) in
       define s cat
     | Mux { select; cases; _ } ->
       let num_cases = List.length cases in
@@ -188,12 +149,12 @@ let write chan { circuit = circ; properties = props; atomic_propositions_map } =
            `Match (const_string_of_signal match_with, value))
          @ [ `Default default ])
     | Op2 { op; arg_a; arg_b; _ } ->
-      let op2 op _ = name arg_a ^ op ^ name arg_b in
-      let wrap s t = s ^ "(" ^ t ^ ")" in
+      let op2 op = Rope.concat [ name arg_a; Rope.of_string op; name arg_b ] in
+      let wrap s t = [%rope "%{s#String}(%{t})"] in
       let signed, unsigned = wrap "signed", wrap "unsigned" in
-      let extend n s = wrap "extend" (s ^ ", " ^ Int.to_string n) in
+      let extend n s = wrap "extend" [%rope "%{s}, %{n#Int}"] in
       let _, word1 = wrap "bool", wrap "word1" in
-      let mop2 sgn op _ =
+      let mop2 sgn op =
         let a, b = arg_a, arg_b in
         let w = width a + width b in
         let ewa, ewb = w - width a, w - width b in
@@ -201,29 +162,25 @@ let write chan { circuit = circ; properties = props; atomic_propositions_map } =
           (if sgn then signed else fun s -> s), if sgn then unsigned else fun s -> s
         in
         let arg w a = unsigned @@ extend w @@ signed @@ name a in
-        arg ewa a ^ op ^ arg ewb b
+        Rope.concat [ arg ewa a; Rope.of_string op; arg ewb b ]
       in
-      let comp op s = word1 (op2 op s) in
+      let comp op = word1 (op2 op) in
       (match op with
-       | Signal_add -> define s (op2 " + " s)
-       | Signal_sub -> define s (op2 " - " s)
-       | Signal_mulu -> define s (mop2 false " * " s)
-       | Signal_muls -> define s (mop2 true " * " s)
-       | Signal_and -> define s (op2 " & " s)
-       | Signal_or -> define s (op2 " | " s)
-       | Signal_xor -> define s (op2 " xor " s)
-       | Signal_eq -> define s (comp " = " s)
-       | Signal_lt -> define s (comp " < " s))
+       | Signal_add -> define s (op2 " + ")
+       | Signal_sub -> define s (op2 " - ")
+       | Signal_mulu -> define s (mop2 false " * ")
+       | Signal_muls -> define s (mop2 true " * ")
+       | Signal_and -> define s (op2 " & ")
+       | Signal_or -> define s (op2 " | ")
+       | Signal_xor -> define s (op2 " xor ")
+       | Signal_eq -> define s (comp " = ")
+       | Signal_lt -> define s (comp " < "))
   in
-  List.iter internal_signals ~f:define;
-  os "\n-- register updates\n";
-  List.iter registers ~f:(fun current ->
+  let register_update (current : Signal.t) =
     match current with
     | Reg { register; d; _ } ->
       let next =
-        let mux2 sel on_true on_false =
-          "(bool(" ^ sel ^ ")?" ^ on_true ^ ":" ^ on_false ^ ")"
-        in
+        let mux2 sel on_true on_false = [%rope "(bool(%{sel})?%{on_true}:%{on_false})"] in
         let nxt =
           let d = name d in
           Option.value_map register.enable ~default:d ~f:(fun enable ->
@@ -256,21 +213,22 @@ let write chan { circuit = circ; properties = props; atomic_propositions_map } =
         let default =
           Option.value_map
             register.initialize_to
-            ~default:(consti (width current) 0)
-            ~f:(fun initial -> const initial)
+            ~default:(const_string_of_int ~width:(width current) 0)
+            ~f:(fun initial -> const_string_of_signal initial)
         in
         Option.value_map
           register.reset
           ~default
-          ~f:(fun { reset = _; reset_edge = _; reset_to } -> const reset_to)
+          ~f:(fun { reset = _; reset_edge = _; reset_to } ->
+            const_string_of_signal reset_to)
       in
-      os ("ASSIGN init(" ^ name current ^ ") := " ^ init ^ ";\n");
-      os ("ASSIGN next(" ^ name current ^ ") := " ^ next ^ ";\n")
-    | _ -> failwith "NuSMV - expecting a register");
-  os "\n-- outputs\n";
-  List.iter outputs ~f:define;
-  os "\n-- SPECS\n";
-  List.iter props ~f:(fun spec ->
+      Rope.concat
+        [ [%rope "ASSIGN init(%{name current}) := %{init};\n"]
+        ; [%rope "ASSIGN next(%{name current}) := %{next};\n"]
+        ]
+    | _ -> raise_s [%message "NuSMV - expecting a register"]
+  in
+  let prop spec =
     let rewrite s =
       match Map.find atomic_propositions_map (Signal.uid s) with
       | None -> raise_s [%message "failed to rewrite atomic proposition"]
@@ -278,15 +236,40 @@ let write chan { circuit = circ; properties = props; atomic_propositions_map } =
     in
     match spec with
     | CTL prop ->
-      os
-        ("CTLSPEC "
-         ^ Property.CTL.(to_string (map_atomic_propositions prop ~f:rewrite))
-         ^ ";\n")
+      let module CTL = Property.CTL in
+      [%rope "CTLSPEC %{CTL.map_atomic_propositions prop ~f:rewrite#CTL};\n"]
     | LTL prop ->
-      os
-        ("LTLSPEC "
-         ^ Property.LTL.(to_string (map_atomic_propositions prop ~f:rewrite))
-         ^ ";\n"))
+      let module LTL = Property.LTL in
+      [%rope "LTLSPEC %{LTL.map_atomic_propositions prop ~f:rewrite#LTL};\n"]
+  in
+  let inputs =
+    List.map inputs ~f:(fun s -> [%rope "VAR %{ name s } : %{ word_spec s };\n"])
+    |> Rope.concat
+  in
+  let register_definitions =
+    List.map registers ~f:(fun s -> [%rope "VAR %{name s} : %{word_spec s};\n"])
+    |> Rope.concat
+  in
+  let comb_logic = List.map internal_signals ~f:comb |> Rope.concat in
+  let register_updates = List.map registers ~f:register_update |> Rope.concat in
+  let outputs = List.map outputs ~f:comb |> Rope.concat in
+  let props = List.map props ~f:prop |> Rope.concat in
+  [%rope
+    {|MODULE main
+
+-- inputs
+%{inputs}
+-- registers
+%{register_definitions}
+-- combinatorial logic
+%{comb_logic}
+-- register updates
+%{register_updates}
+-- outputs
+%{outputs}
+-- SPECS
+%{props}
+|}]
 ;;
 
 module Counter_example_trace = struct
@@ -427,12 +410,13 @@ module Output_parser = struct
   ;;
 end
 
-let nusmv_path = Config.nusmv
+let nusmv_path = Tools_config.nusmv
 
 let run (t : t) =
   let tmp_file = Stdlib.Filename.temp_file "hardcaml_verify_nusmv" "txt" in
   let oc = Stdio.Out_channel.create tmp_file in
-  write oc t;
+  let rope = to_rope t in
+  Stdio.Out_channel.output_string oc (Rope.to_string rope);
   Stdio.Out_channel.close oc;
   let command =
     [ nusmv_path

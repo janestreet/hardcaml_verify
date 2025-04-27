@@ -338,7 +338,7 @@ let test_inst_with_cycle e_bit =
   let b = wire 1 in
   let c = inst1 1 a b in
   let d, e = inst2 1 c in
-  b <== e.:(e_bit);
+  b <-- e.:(e_bit);
   Circuit.create_exn ~name:"top" [ output "d" d; output "e" e ]
 ;;
 

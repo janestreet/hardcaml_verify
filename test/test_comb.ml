@@ -39,8 +39,8 @@ let%expect_test "addition" =
   (* evaluate - this is done via cofactor all inputs and relying on constant
      propogation to reduce all outputs to constants. *)
   let eval a' b' =
-    let f = cofactor ~var:a (of_int ~width:2 a') ~f in
-    cofactor ~var:b (of_int ~width:2 b') ~f
+    let f = cofactor ~var:a (of_int_trunc ~width:2 a') ~f in
+    cofactor ~var:b (of_int_trunc ~width:2 b') ~f
   in
   let all = Array.init 4 ~f:(fun a -> Array.init 4 ~f:(eval a)) in
   print_s [%message (all : t array array)];

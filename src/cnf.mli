@@ -42,7 +42,7 @@ type t [@@deriving sexp_of]
 (** Not of a literal. *)
 val ( ~: ) : Literal.t -> Literal.t
 
-(** Create CNF from a [Conjunction.t].  *)
+(** Create CNF from a [Conjunction.t]. *)
 val create : Conjunction.t -> t
 
 (** Fold over each disjunction in CNF *)

@@ -126,7 +126,7 @@ module Make (Comb : Comb.S) = struct
       then `input idx
       else (
         let v = Char.to_int c - Char.to_int '1' in
-        `const (of_int ~width:9 (1 lsl v))))
+        `const (of_int_trunc ~width:9 (1 lsl v))))
     |> Array.of_list
   ;;
 
@@ -138,7 +138,7 @@ module Make (Comb : Comb.S) = struct
     | Ok (Sat sat_solution) ->
       let sat_solution =
         List.map sat_solution ~f:(fun { name; value } ->
-          name, Bits.of_string value |> Bits.to_int |> Int.ceil_log2)
+          name, Bits.of_string value |> Bits.to_int_trunc |> Int.ceil_log2)
       in
       String.to_list puzzle
       |> List.mapi ~f:(fun i c ->

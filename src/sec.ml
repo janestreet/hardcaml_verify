@@ -89,8 +89,8 @@ module Checkable_circuit = struct
   [@@deriving sexp_of]
 
   type sat =
-    { sat_gates : Comb_gates.t Map.M(Signal.Uid).t
-    ; sat_registers : register_outputs Map.M(Signal.Uid).t
+    { sat_gates : Comb_gates.t Map.M(Signal.Type.Uid).t
+    ; sat_registers : register_outputs Map.M(Signal.Type.Uid).t
     }
 
   (* Find inputs and stateful elements *)
@@ -282,7 +282,7 @@ module Checkable_circuit = struct
         Signal.uid reg, out)
       |> Or_error.all
     in
-    match Map.of_alist (module Signal.Uid) regs_and_outputs with
+    match Map.of_alist (module Signal.Type.Uid) regs_and_outputs with
     | `Ok map -> Ok map
     | `Duplicate_key _ ->
       Or_error.error_s
@@ -432,7 +432,7 @@ let pair_signals_by_name context (signals : Signal.t list Pair.t) =
 
 type 'a paired_inputs =
   { paired : Signal.t paired list
-  ; inputs : Comb_gates.t Map.M(Signal.Uid).t Pair.t
+  ; inputs : Comb_gates.t Map.M(Signal.Type.Uid).t Pair.t
   }
 [@@deriving sexp_of]
 
@@ -441,7 +441,7 @@ let pair_ports_by_name context ports =
   let%bind.Or_error left, right =
     fold
       paired
-      ~init:(Map.empty (module Signal.Uid), Map.empty (module Signal.Uid))
+      ~init:(Map.empty (module Signal.Type.Uid), Map.empty (module Signal.Type.Uid))
       ~f:(fun (left, right) paired ->
         let add map key data =
           match Map.add map ~key ~data with
@@ -631,7 +631,7 @@ let pair_instantiations_by_name ~instantiation_ports_match insts =
   let%bind.Or_error left, right =
     fold
       paired
-      ~init:(Map.empty (module Signal.Uid), Map.empty (module Signal.Uid))
+      ~init:(Map.empty (module Signal.Type.Uid), Map.empty (module Signal.Type.Uid))
       ~f:(fun (left, right) paired ->
         let%bind.Or_error () =
           check_instantiations
@@ -660,7 +660,7 @@ let pair_instantiations_by_name ~instantiation_ports_match insts =
   Ok { paired; inputs = { left; right } }
 ;;
 
-let lookup (map : Comb_gates.t Map.M(Signal.Uid).t) signal =
+let lookup (map : Comb_gates.t Map.M(Signal.Type.Uid).t) signal =
   match Map.find map (Signal.uid signal) with
   | None ->
     Or_error.error_s
@@ -755,7 +755,9 @@ let compare_registers
 ;;
 
 (* Go through the inputs of the instantiation, and compare them on the left and right. *)
-let compare_instantiation (maps : _ Map.M(Signal.Uid).t Pair.t) (paired : Signal.t paired)
+let compare_instantiation
+  (maps : _ Map.M(Signal.Type.Uid).t Pair.t)
+  (paired : Signal.t paired)
   =
   let%bind.Or_error i =
     Pair.map_or_error paired ~f:(fun d -> instantiation_of_signal d.data)

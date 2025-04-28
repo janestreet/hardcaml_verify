@@ -20,8 +20,7 @@ open! Hardcaml
     may be specified without a signal, and when converting with [Hardcaml_of_verilog] they
     will not exist in the instantiated sub-circuit. Care should be taken to ensure the
     undriven ports do not effect the operation of the design ie. try to avoid it, but it
-    is unfortunately somewhat inevitable with some external verilog code.
-*)
+    is unfortunately somewhat inevitable with some external verilog code. *)
 module Instantiation_ports_match : sig
   type t =
     | Exactly
@@ -47,8 +46,7 @@ end
     [instantiation_ports_match] allows the left (first passed) circuit to contain
     instantiations which have a subset of the ports on instantiations in the right (second
     passed) circuit. This comes up when comparing with a circuit that was converted from
-    verilog and has floating ports.
-*)
+    verilog and has floating ports. *)
 val create
   :  ?instantiation_ports_match:Instantiation_ports_match.t
   -> Hardcaml.Circuit.t

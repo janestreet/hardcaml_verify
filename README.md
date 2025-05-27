@@ -1,5 +1,5 @@
-"Hardcaml Verification Tools"
-=============================
+Verifaction Support
+===================
 
 Verification support for Hardcaml.
 

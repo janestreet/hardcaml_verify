@@ -240,7 +240,7 @@ let inst1 n a b =
       ~outputs:[ "c", 3 ]
       ()
   in
-  Map.find_exn inst "c"
+  Instantiation.output inst "c"
 ;;
 
 let inst2 n a =
@@ -252,7 +252,7 @@ let inst2 n a =
       ~outputs:[ "c", 5; "d", 5 ]
       ()
   in
-  Map.find_exn inst "c", Map.find_exn inst "d"
+  Instantiation.output inst "c", Instantiation.output inst "d"
 ;;
 
 let test_inst1 () =
@@ -372,7 +372,7 @@ let inst3 n a =
       ~outputs:[ "c", 3 ]
       ()
   in
-  Map.find_exn inst "c"
+  Instantiation.output inst "c"
 ;;
 
 let inst4 n a b =
@@ -384,7 +384,7 @@ let inst4 n a b =
       ~outputs:[ "c", 3; "d", 12 ]
       ()
   in
-  Map.find_exn inst "c"
+  Instantiation.output inst "c"
 ;;
 
 let test_inst5 () =
@@ -425,7 +425,7 @@ let inst6 a b_width =
       ~outputs:[ "b", b_width ]
       ()
   in
-  Map.find_exn inst "b"
+  Instantiation.output inst "b"
 ;;
 
 let test_inst7 () =

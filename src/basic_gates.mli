@@ -5,9 +5,9 @@
 open Base
 module Uid : Uid.S
 
-type t [@@deriving compare, sexp]
+type t [@@deriving compare ~localize, sexp]
 
-include Comparable.S with type t := t
+include%template Comparable.S [@mode local] with type t := t
 
 val optimise_muxs : bool
 val constant_only : bool

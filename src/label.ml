@@ -15,9 +15,10 @@ module T = struct
     ^ if t.hidden then "?" else ""
   ;;
 
-  let compare a b =
+  let%template compare a b =
     let uid = Uid.compare a.uid b.uid in
     if uid <> 0 then uid else Int.compare a.bit_pos b.bit_pos
+  [@@mode m = (local, global)]
   ;;
 
   module Compact_sexp : sig
@@ -48,4 +49,4 @@ let create ?(width = 1) ?(hidden = false) name =
 
 let create1 ?hidden name = (create ?hidden name).(0)
 
-include Comparable.Make (T)
+include%template Comparable.Make [@mode local] (T)

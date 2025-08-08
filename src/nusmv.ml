@@ -19,11 +19,17 @@ let create ?(outputs = []) ~name properties =
     module T = struct
       type t = Signal.t [@@deriving sexp_of]
 
-      let compare a b = Signal.Type.Uid.compare (uid a) (uid b)
+      let%template compare a b =
+        (Signal.Type.Uid.compare [@mode local])
+          ((uid [@mode local]) a)
+          ((uid [@mode local]) b) [@nontail]
+      [@@mode m = (local, global)]
+      ;;
     end
 
     include T
-    include Comparable.Make (T)
+
+    include%template Comparable.Make [@mode local] (T)
   end
   in
   let atomic_propositions =

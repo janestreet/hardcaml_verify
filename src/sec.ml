@@ -135,7 +135,7 @@ module Checkable_circuit = struct
     let%bind.Or_error name = get_unique_name "Sec.register_outputs" register in
     let%bind.Or_error register, d =
       match register with
-      | Reg { signal_id = _; register; d } -> Ok (register, d)
+      | Reg { info = _; register; d } -> Ok (register, d)
       | _ -> Or_error.error_s [%message "[Sec.register_outputs] Expecting register"]
     in
     let find s =
@@ -153,7 +153,7 @@ module Checkable_circuit = struct
         let%bind.Or_error s = find s in
         Ok (Some s)
     in
-    let { Signal.Type.clock; clock_edge } = register.clock in
+    let { Signal.Type.Reg.Clock_spec.clock; clock_edge } = register.clock in
     let%bind.Or_error clock = find clock
     and reset, reset_edge, reset_to =
       match register.reset with
@@ -219,29 +219,29 @@ module Checkable_circuit = struct
       in
       match signal with
       | Empty -> Ok ready
-      | Const { signal_id = _; constant } ->
+      | Const { info = _; constant } ->
         add (Comb_gates.of_constant (Bits.to_constant constant))
-      | Op2 { signal_id = _; op; arg_a; arg_b } ->
+      | Op2 { info = _; op; arg_a; arg_b } ->
         let%bind.Or_error arg_a = find arg_a in
         let%bind.Or_error arg_b = find arg_b in
         add
           ((match op with
-            | Signal_add -> Comb_gates.( +: )
-            | Signal_sub -> Comb_gates.( -: )
-            | Signal_mulu -> Comb_gates.( *: )
-            | Signal_muls -> Comb_gates.( *+ )
-            | Signal_and -> Comb_gates.( &: )
-            | Signal_or -> Comb_gates.( |: )
-            | Signal_xor -> Comb_gates.( ^: )
-            | Signal_eq -> Comb_gates.( ==: )
-            | Signal_lt -> Comb_gates.( <: ))
+            | Add -> Comb_gates.( +: )
+            | Sub -> Comb_gates.( -: )
+            | Mulu -> Comb_gates.( *: )
+            | Muls -> Comb_gates.( *+ )
+            | And -> Comb_gates.( &: )
+            | Or -> Comb_gates.( |: )
+            | Xor -> Comb_gates.( ^: )
+            | Eq -> Comb_gates.( ==: )
+            | Lt -> Comb_gates.( <: ))
              arg_a
              arg_b)
-      | Mux { signal_id = _; select; cases } ->
+      | Mux { info = _; select; cases } ->
         let%bind.Or_error select = find select in
         let%bind.Or_error cases = Or_error.all (List.map cases ~f:find) in
         add (Comb_gates.mux select cases)
-      | Cases { signal_id = _; select; cases; default } ->
+      | Cases { info = _; select; cases; default } ->
         let%bind.Or_error select = find select in
         let%bind.Or_error default = find default in
         let%bind.Or_error cases =
@@ -252,25 +252,25 @@ module Checkable_circuit = struct
                match_with, value))
         in
         add (Comb_gates.cases ~default select cases)
-      | Cat { signal_id = _; args } ->
+      | Cat { info = _; args } ->
         let%bind.Or_error args = Or_error.all (List.map args ~f:find) in
         add (Comb_gates.concat_msb args)
-      | Not { signal_id = _; arg } ->
+      | Not { info = _; arg } ->
         let%bind.Or_error arg = find arg in
         add (Comb_gates.( ~: ) arg)
-      | Wire { signal_id = _; driver = None } -> Ok ready
-      | Wire { signal_id = _; driver = Some driver } ->
+      | Wire { info = _; driver = None } -> Ok ready
+      | Wire { info = _; driver = Some driver } ->
         let%bind.Or_error driver = find driver in
         add driver
-      | Select { signal_id = _; arg; high; low } ->
+      | Select { info = _; arg; high; low } ->
         let%bind.Or_error arg = find arg in
         add arg.Comb_gates.:[high, low]
-      | Reg { signal_id = _; register = _; d = _ } ->
+      | Reg { info = _; register = _; d = _ } ->
         (* We do nothing with registers here. *)
         Ok ready
       | Multiport_mem _ | Mem_read_port _ ->
         Or_error.error_s [%message "memories are not supported (yet)"]
-      | Inst { signal_id = _; instantiation = _ } -> Ok ready)
+      | Inst { info = _; instantiation = _ } -> Ok ready)
   ;;
 
   (* compile each register *)
@@ -501,15 +501,15 @@ let instantiation_input_ports_match ~instantiation_ports_match instantiation_sig
   in
   let module Port = struct
     module T = struct
-      type t = Signal.Type.instantiation_input
+      type t = Signal.t Signal.Type.Inst.Input.t
 
-      let sexp_of_t { Signal.Type.name; input_signal } =
+      let sexp_of_t { Signal.Type.Inst.Input.name; input_signal } =
         [%sexp_of: string * Signal.t] (name, input_signal)
       ;;
 
       let compare
-        { Signal.Type.name = a; input_signal = x }
-        { Signal.Type.name = b; input_signal = y }
+        { Signal.Type.Inst.Input.name = a; input_signal = x }
+        { Signal.Type.Inst.Input.name = b; input_signal = y }
         =
         [%compare: string * int] (a, Signal.width x) (b, Signal.width y)
       ;;
@@ -545,15 +545,15 @@ let instantiation_output_ports_match ~instantiation_ports_match s =
   let%bind.Or_error i = Pair.map_or_error s ~f:instantiation_of_signal in
   let module Port = struct
     module T = struct
-      type t = Signal.Type.instantiation_output
+      type t = Signal.Type.Inst.Output.t
 
-      let sexp_of_t { Signal.Type.name; output_width; output_low_index } =
+      let sexp_of_t { Signal.Type.Inst.Output.name; output_width; output_low_index } =
         [%sexp_of: string * (int * int)] (name, (output_width, output_low_index))
       ;;
 
       let compare
-        { Signal.Type.name = a; output_width = m; output_low_index = _ }
-        { Signal.Type.name = b; output_width = n; output_low_index = _ }
+        { Signal.Type.Inst.Output.name = a; output_width = m; output_low_index = _ }
+        { Signal.Type.Inst.Output.name = b; output_width = n; output_low_index = _ }
         =
         [%compare: string * int] (a, m) (b, n)
       ;;

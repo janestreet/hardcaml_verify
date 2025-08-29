@@ -172,15 +172,15 @@ let to_rope { circuit = circ; properties = props; atomic_propositions_map } =
       in
       let comp op = word1 (op2 op) in
       (match op with
-       | Signal_add -> define s (op2 " + ")
-       | Signal_sub -> define s (op2 " - ")
-       | Signal_mulu -> define s (mop2 false " * ")
-       | Signal_muls -> define s (mop2 true " * ")
-       | Signal_and -> define s (op2 " & ")
-       | Signal_or -> define s (op2 " | ")
-       | Signal_xor -> define s (op2 " xor ")
-       | Signal_eq -> define s (comp " = ")
-       | Signal_lt -> define s (comp " < "))
+       | Add -> define s (op2 " + ")
+       | Sub -> define s (op2 " - ")
+       | Mulu -> define s (mop2 false " * ")
+       | Muls -> define s (mop2 true " * ")
+       | And -> define s (op2 " & ")
+       | Or -> define s (op2 " | ")
+       | Xor -> define s (op2 " xor ")
+       | Eq -> define s (comp " = ")
+       | Lt -> define s (comp " < "))
   in
   let register_update (current : Signal.t) =
     match current with

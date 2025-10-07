@@ -42,7 +42,8 @@ open! Hardcaml_verify
     v}
 *)
 module I = struct
-  type 'a t = { cells : 'a array [@bits 9] [@length 9 * 9] } [@@deriving hardcaml]
+  type 'a t = { cells : 'a array [@bits 9] [@length 9 * 9] }
+  [@@deriving hardcaml ~rtlmangle:false]
 end
 
 (* The output is simply a single bit which is [1] when the input solution is valid, and

@@ -301,9 +301,9 @@ let%expect_test "instantiation" =
         Sat (
           ((name input$x)              (value 0))
           ((name input$y)              (value 1))
-          ((name instantiation$bar1$c) (value 11010))
-          ((name instantiation$bar1$d) (value 10000))
-          ((name instantiation$foo1$c) (value 110))))))
+          ((name instantiation$bar1$c) (value 01111))
+          ((name instantiation$bar1$d) (value 00011))
+          ((name instantiation$foo1$c) (value 010))))))
     |}];
   (* Outputs of inst are wired differently *)
   let result = equivalent (test_inst1 ()) (test_inst3 ()) in
@@ -353,10 +353,10 @@ let%expect_test "cycle through instantiation" =
     (result (
       Ok (
         Sat (
-          ((name input$x)              (value 0))
-          ((name instantiation$bar1$c) (value 01000))
-          ((name instantiation$bar1$d) (value 11110))
-          ((name instantiation$foo1$c) (value 001))))))
+          ((name input$x)              (value 1))
+          ((name instantiation$bar1$c) (value 10010))
+          ((name instantiation$bar1$d) (value 10110))
+          ((name instantiation$foo1$c) (value 011))))))
     |}]
 ;;
 

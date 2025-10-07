@@ -50,8 +50,15 @@ module Counter_example_trace = struct
         let width = Bits.width (Data.get data 0) in
         let wave =
           match width with
-          | 1 -> Wave.Binary (name, data)
-          | _ -> Wave.Data (name, data, Hex, Left)
+          | 1 -> Wave.Binary { name; data; style = { style = Style.default } }
+          | _ ->
+            Wave.Data
+              { name
+              ; data
+              ; wave_format = { current = Hex; default = Hex }
+              ; text_alignment = Left
+              ; style = { style = Style.default }
+              }
         in
         let port =
           let type_ =

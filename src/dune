@@ -3,4 +3,4 @@
  (public_name hardcaml_verify.kernel)
  (libraries base hardcaml re jane_rope stdio unix)
  (preprocess
-  (pps ppx_hardcaml ppx_jane ppx_rope)))
+  (pps ppx_hardcaml ppx_jane ppx_rope -require-template-extension)))

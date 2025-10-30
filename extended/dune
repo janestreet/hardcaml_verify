@@ -1,7 +1,7 @@
 (library
  (name hardcaml_verify)
  (public_name hardcaml_verify)
- (libraries base hardcaml re hardcaml_verify_kernel hardcaml_waveterm
-   hardcaml_waveterm.cyclesim hardcaml_waveterm.kernel stdio)
+ (libraries base hardcaml hardcaml_verify_kernel hardcaml_waveterm
+   hardcaml_waveterm.cyclesim hardcaml_waveterm.kernel re stdio)
  (preprocess
   (pps ppx_hardcaml ppx_jane)))

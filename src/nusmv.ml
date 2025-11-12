@@ -220,7 +220,7 @@ let to_rope { circuit = circ; properties = props; atomic_propositions_map } =
           Option.value_map
             register.initialize_to
             ~default:(const_string_of_int ~width:(width current) 0)
-            ~f:(fun initial -> const_string_of_signal initial)
+            ~f:(fun initial -> const_string_of_bits initial)
         in
         Option.value_map
           register.reset

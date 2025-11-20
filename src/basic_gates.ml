@@ -204,7 +204,7 @@ let cnf ?(show_hidden = false) fn =
           let input = Cnf.Literal.of_labels [| label |] in
           (* I think this is safe - it should only be used if the only thing in the
              circuit is a single literal - and that would produce something like [a&a]
-             which is fine.  Seems to be ok in the tests. *)
+             which is fine. Seems to be ok in the tests. *)
           let final_term = Some input.(0) in
           Map.add_exn map ~key:uid ~data:input.(0), cnf, final_term
         | And { uid; arg1; arg2 } ->

@@ -426,8 +426,8 @@ let run (t : t) =
   Stdio.Out_channel.close oc;
   let command =
     [ nusmv_path
-    ; (* [-quiet] is a secret command line argument that suppresses the initial
-         banner's printing. *)
+    ; (* [-quiet] is a secret command line argument that suppresses the initial banner's
+         printing. *)
       "-quiet"
     ; tmp_file
     ]

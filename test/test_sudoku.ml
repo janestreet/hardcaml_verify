@@ -23,9 +23,9 @@ let one_in_each =
      return (List.map (r 1 9) ~f:(fun z -> p x y z)))
 ;;
 
-(* The [once_in_row] and [once_in_col] adds constraints that diallows a digit
-   to show up multiple times within a single row or column respectively. This
-   is achieved by De Morgan's principle
+(* The [once_in_row] and [once_in_col] adds constraints that diallows a digit to show up
+   multiple times within a single row or column respectively. This is achieved by De
+   Morgan's principle
 
    Eg: (n x y z) OR (n i y z) means
 
@@ -70,9 +70,9 @@ let once_in_block =
      return [ p1; p2 ])
 ;;
 
-(* These constraints validate that each row / block / col contains no more than 1 of
-   each number. Since a sudoku row / block / col can only contain 9 numbers, this
-   automatically implies that the row / block / col will contain a unique set of digits.
+(* These constraints validate that each row / block / col contains no more than 1 of each
+   number. Since a sudoku row / block / col can only contain 9 numbers, this automatically
+   implies that the row / block / col will contain a unique set of digits.
 
    [one_in_each] prevents the solver from coming up with a trivial solution.
 *)

@@ -36,8 +36,8 @@ let%expect_test "addition" =
         (arg1 (Var (uid 5) (label (a 0 4 false))))
         (arg2 (Var (uid 7) (label (b 0 5 false)))))))
     |}];
-  (* evaluate - this is done via cofactor all inputs and relying on constant
-     propogation to reduce all outputs to constants. *)
+  (* evaluate - this is done via cofactor all inputs and relying on constant propogation
+     to reduce all outputs to constants. *)
   let eval a' b' =
     let f = cofactor ~var:a (of_int_trunc ~width:2 a') ~f in
     cofactor ~var:b (of_int_trunc ~width:2 b') ~f

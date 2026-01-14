@@ -39,7 +39,7 @@ open! Hardcaml_verify
       7 001000000
       8 010000000
       9 100000000
-    v}
+   v}
 *)
 module I = struct
   type 'a t = { cells : 'a array [@bits 9] [@length 9 * 9] }
@@ -99,7 +99,7 @@ module Make (Comb : Comb.S) = struct
      2. Check all nine cols are valid
      3. Check all nine blocks are valid
 
-     And just and together all the intermediate results.  Easy!
+     And just and together all the intermediate results. Easy!
   *)
 
   let create (i : _ I.t) =
@@ -117,7 +117,8 @@ module Make (Comb : Comb.S) = struct
   (* Read a puzzle from a string. The string is [9*9] characters long and should only
      contain the numbers [1-9] and a [.].
 
-     For numbers, it returns [`const onehot_vector].  For the [.] it returns [`input index].
+     For numbers, it returns [`const onehot_vector]. For the [.] it returns
+     [`input index].
   *)
   let read_puzzle puzzle =
     puzzle
@@ -205,7 +206,7 @@ let%expect_test "bad puzzle" =
 (* Now we turn to the incomplete puzzle.
 
    The main difference is we now create [input] varaibles for the cells whose values we
-   dont know.  The expression;
+   dont know. The expression;
 
    [is_valid_solution |> cnf |> Solver.solve]
 
@@ -229,7 +230,7 @@ let solve puzzle =
   print_s [%message (sat : Cnf.Model_with_vectors.input Solver.result)]
 ;;
 
-(* Oops.  This doesn't look right.
+(* Oops. This doesn't look right.
 
    First, the [-] symbols tell us the solver didn't even have to look at these bits to
    find the solution. Ok, but weird.
@@ -282,8 +283,8 @@ let%expect_test "solve" =
 
    We could also add the onehot check to [Sudoku_checker.create]. If, however, we want to
    check solutions at a high clock rate (for example 500MHz) we want as lttle logic in
-   what is already the critical path. It would be better to enforce the onehot property
-   in the logic that create inputs (ie shift-registers).
+   what is already the critical path. It would be better to enforce the onehot property in
+   the logic that create inputs (ie shift-registers).
 
    In terms of performance of the SAT solver, it's slightly better only onehot checking
    the actual inputs (i.e. non-constants) - though I expect something would end up

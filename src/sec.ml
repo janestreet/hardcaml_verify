@@ -72,7 +72,7 @@ module Checkable_circuit = struct
     ; clock : Comb_gates.t
     ; clock_edge : Edge.t
     ; reset : Comb_gates.t option
-    ; reset_edge : Edge.t
+    ; reset_level : Level.t
     ; reset_to : Comb_gates.t option
     ; clear : Comb_gates.t option
     ; clear_to : Comb_gates.t option
@@ -155,13 +155,13 @@ module Checkable_circuit = struct
     in
     let { Signal.Type.Reg.Clock_spec.clock; clock_edge } = register.clock in
     let%bind.Or_error clock = find clock
-    and reset, reset_edge, reset_to =
+    and reset, reset_level, reset_to =
       match register.reset with
-      | None -> Ok (None, Edge.Rising, None)
-      | Some { reset; reset_edge; reset_to } ->
+      | None -> Ok (None, Level.High, None)
+      | Some { reset; reset_level; reset_to } ->
         let%bind.Or_error reset = find reset
         and reset_to = find reset_to in
-        Ok (Some reset, reset_edge, Some reset_to)
+        Ok (Some reset, reset_level, Some reset_to)
     and clear, clear_to =
       match register.clear with
       | None -> Ok (None, None)
@@ -172,7 +172,17 @@ module Checkable_circuit = struct
     and enable = find_opt register.enable
     and d = find d in
     Ok
-      { name; clock; clock_edge; reset; reset_edge; reset_to; clear; clear_to; enable; d }
+      { name
+      ; clock
+      ; clock_edge
+      ; reset
+      ; reset_level
+      ; reset_to
+      ; clear
+      ; clear_to
+      ; enable
+      ; d
+      }
   ;;
 
   (* Create a map of all inputs, including the pseudo inputs for registers etc. *)
@@ -744,6 +754,17 @@ let compare_register (circuits : Checkable_circuit.sat Pair.t) (pair : Signal.t 
             (e : Edge.t Pair.t)
             ~name:(pair.left.name : string)]
   in
+  let check_level context (l : _ Pair.t) =
+    if Level.equal l.left l.right
+    then Ok ()
+    else
+      Or_error.error_s
+        [%message
+          "Level specifications do not match"
+            (context : string)
+            (l : Level.t Pair.t)
+            ~name:(pair.left.name : string)]
+  in
   let check_optional_signal context (s : _ Pair.t) =
     match s.left, s.right with
     | None, None -> Ok Comb_gates.vdd
@@ -755,7 +776,7 @@ let compare_register (circuits : Checkable_circuit.sat Pair.t) (pair : Signal.t 
   let clock = eq (field (fun d -> d.clock)) in
   let%bind.Or_error () = check_edge "clock_edge" (field (fun d -> d.clock_edge))
   and reset = check_optional_signal "reset" (field (fun d -> d.reset))
-  and () = check_edge "reset_edge" (field (fun d -> d.reset_edge))
+  and () = check_level "reset_level" (field (fun d -> d.reset_level))
   and reset_to = check_optional_signal "reset_to" (field (fun d -> d.reset_to))
   and clear = check_optional_signal "clear" (field (fun d -> d.clear))
   and clear_to = check_optional_signal "clear_to" (field (fun d -> d.clear_to))

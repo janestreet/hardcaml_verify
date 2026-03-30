@@ -160,7 +160,7 @@ let test_spec1 () =
       ~clock:(input "clock" 1)
       ~reset:(input "reset" 1)
       ~clock_edge:Rising
-      ~reset_edge:Rising
+      ~reset_level:High
       ()
   in
   Circuit.create_exn ~name:"foo" [ output "x" (reg spec (input "a" 2) -- "reg1") ]
@@ -172,7 +172,7 @@ let test_spec2 () =
       ~clock:(input "clock" 1)
       ~reset:(input "reset" 1)
       ~clock_edge:Falling
-      ~reset_edge:Falling
+      ~reset_level:Low
       ()
   in
   Circuit.create_exn ~name:"foo" [ output "x" (reg spec (input "a" 2) -- "reg1") ]
@@ -191,11 +191,11 @@ let%expect_test "edges and levels" =
             (left  Rising)
             (right Falling)))
           (name reg1))
-        ("Edge specifications do not match"
-          (context reset_edge)
-          (e (
-            (left  Rising)
-            (right Falling)))
+        ("Level specifications do not match"
+          (context reset_level)
+          (l (
+            (left  High)
+            (right Low)))
           (name reg1)))))
     |}]
 ;;

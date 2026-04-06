@@ -200,10 +200,10 @@ let to_rope { circuit = circ; properties = props; atomic_propositions_map } =
           Option.value_map
             register.reset
             ~default:nxt
-            ~f:(fun { reset; reset_edge; reset_to } ->
-              match reset_edge with
-              | Rising -> mux2 (name reset) (name reset_to) nxt
-              | Falling -> mux2 (name reset) nxt (name reset_to))
+            ~f:(fun { reset; reset_level; reset_to } ->
+              match reset_level with
+              | High -> mux2 (name reset) (name reset_to) nxt
+              | Low -> mux2 (name reset) nxt (name reset_to))
         in
         nxt
       in
@@ -225,7 +225,7 @@ let to_rope { circuit = circ; properties = props; atomic_propositions_map } =
         Option.value_map
           register.reset
           ~default
-          ~f:(fun { reset = _; reset_edge = _; reset_to } ->
+          ~f:(fun { reset = _; reset_level = _; reset_to } ->
             const_string_of_signal reset_to)
       in
       Rope.concat

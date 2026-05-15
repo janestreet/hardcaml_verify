@@ -1,13 +1,12 @@
 open Base
 open Hardcaml
-open Hardcaml_waveterm_kernel
-open Hardcaml_waveterm_cyclesim
 include Hardcaml_verify_kernel.Nusmv
 
 module Counter_example_trace = struct
   include Counter_example_trace
+  module Data = Hardcaml.Wave_data_in_cycles
 
-  let to_waveform nusmv counter_example_trace =
+  let to_cyclesim_waveform nusmv counter_example_trace =
     let states = to_trace counter_example_trace in
     let data_map =
       match states with
@@ -42,38 +41,32 @@ module Counter_example_trace = struct
     let input_names = Circuit.inputs (circuit nusmv) |> signals_to_names in
     let output_names = Circuit.outputs (circuit nusmv) |> signals_to_names in
     let all_names = Circuit.signal_map (circuit nusmv) |> Map.data |> signals_to_names in
-    let waves_and_ports =
+    let waves =
       Map.to_alist data_map
       |> List.filter ~f:(fun (name, _) -> not (String.is_prefix name ~prefix:"_"))
       |> List.filter ~f:(fun (name, _) -> Set.mem all_names name)
       |> List.map ~f:(fun (name, data) ->
         let width = Bits.width (Data.get data 0) in
         let wave =
-          match width with
-          | 1 -> Wave.Binary { name; data; style = { style = Style.default } }
-          | _ ->
-            Wave.Data
-              { name
-              ; data
-              ; wave_format = { current = Hex; default = Hex }
-              ; text_alignment = Left
-              ; style = { style = Style.default }
-              }
+          { Wave_data.Wave.name
+          ; width
+          ; typ =
+              (if Set.mem input_names name
+               then Input
+               else if Set.mem output_names name
+               then Output
+               else Internal)
+          ; is_pseudo_clock = false
+          ; wave_data = data
+          ; wave_format = Bit_or Hex
+          }
         in
-        let port =
-          let type_ =
-            if Set.mem input_names name
-            then Port.Type.Input
-            else if Set.mem output_names name
-            then Port.Type.Output
-            else Port.Type.Internal
-            (* We already filtered to ensure it's in all_names *)
-          in
-          { Port.type_; port_name = Port_name.of_string name; width }
-        in
-        wave, port)
+        wave)
     in
-    let waves, ports = List.unzip waves_and_ports in
-    Waveform.create_from_data ~waves ~ports
+    Wave_data.By_cycle (Array.of_list waves)
+  ;;
+
+  let to_waveform nusmv counter_example_trace =
+    to_cyclesim_waveform nusmv counter_example_trace
   ;;
 end

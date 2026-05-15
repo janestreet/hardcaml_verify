@@ -14,16 +14,17 @@ depends: [
   "ocaml" {>= "5.1.0"}
   "base"
   "hardcaml"
+  "hardcaml_tools_config"
   "hardcaml_waveterm"
   "jane_rope"
   "ppx_hardcaml"
   "ppx_jane"
   "ppx_rope"
   "stdio"
-  "dune"              {>= "3.17.0"}
-  "re"                {>= "1.8.0"}
+  "dune"                  {>= "3.17.0"}
+  "re"                    {>= "1.8.0"}
 ]
-available: arch != "arm32" & arch != "x86_32"
+available: arch != "x86_32"
 synopsis: "Hardcaml Verification Tools"
 description: "
 Tools for verifying properties of Hardcaml circuits.

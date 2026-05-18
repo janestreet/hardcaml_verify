@@ -18,7 +18,12 @@ type t [@@deriving sexp_of]
     The important part of the circuit is traced back from the [atomic_propositions].
     However, it is possible to include the complete circuit if required by passing
     [outputs]. *)
-val create : ?outputs:Signal.t list -> name:string -> property list -> t
+val create
+  :  ?normalize_uids:bool
+  -> ?outputs:Signal.t list
+  -> name:string
+  -> property list
+  -> t
 
 (** Return the circuit generated for the NuSMV model. *)
 val circuit : t -> Circuit.t
@@ -62,7 +67,7 @@ module With_interface (I : Hardcaml.Interface.S) (O : Hardcaml.Interface.S) : si
   type ltl := Property.LTL.path
   type ctl := Property.CTL.state
 
-  val create : name:string -> Interface.Create_fn(I)(O).t -> t
+  val create : ?normalize_uids:bool -> name:string -> Interface.Create_fn(I)(O).t -> t
   val ltl : t -> (ltl array I.t, ltl array O.t) Circuit_properties.t
   val ctl : t -> (ctl array I.t, ctl array O.t) Circuit_properties.t
   val create_specification : t -> property list -> model

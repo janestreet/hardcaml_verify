@@ -91,7 +91,12 @@ let%expect_test "clear resets registers" =
 let%expect_test "example NuSMV failure trace" =
   let open Delayed_adder in
   let module Model = Nusmv.With_interface (I) (O) in
-  let model = Model.create ~name:"delayed_adder" Delayed_adder.create in
+  let model =
+    Model.create
+      ~name:"delayed_adder"
+      ~normalize_uids:true (* Ensure that printed signal UIDs are stable *)
+      Delayed_adder.create
+  in
   let inputs = Model.ltl model |> Nusmv.Circuit_properties.inputs in
   let outputs = Model.ltl model |> Nusmv.Circuit_properties.outputs in
   let properties =

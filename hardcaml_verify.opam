@@ -17,8 +17,10 @@ depends: [
   "hardcaml_tools_config"
   "hardcaml_waveterm"
   "jane_rope"
+  "jsonaf"
   "ppx_hardcaml"
   "ppx_jane"
+  "ppx_jsonaf_conv"
   "ppx_rope"
   "stdio"
   "dune"                  {>= "3.17.0"}

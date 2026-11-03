@@ -1,6 +1,6 @@
 open Base
 open Stdio
-open Hardcaml_verify
+open Hardcaml_formal_verification
 
 let nqueens size =
   (* generate rows/cols/diagonals *)

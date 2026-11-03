@@ -1,5 +1,4 @@
-Verifaction Support
-===================
+# Verifaction Support
 
 Verification support for Hardcaml.
 

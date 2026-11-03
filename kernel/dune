@@ -1,0 +1,8 @@
+(library
+ (name hardcaml_formal_verification_kernel)
+ (public_name hardcaml_verify.kernel)
+ (libraries base hardcaml hardcaml_tools_config jsonaf jsonaf.kernel re
+   jane_rope stdio unix)
+ (preprocess
+  (pps ppx_jsonaf_conv ppx_hardcaml ppx_jane ppx_rope
+    -require-template-extension)))

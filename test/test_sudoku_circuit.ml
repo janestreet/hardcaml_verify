@@ -11,7 +11,7 @@
 open Base
 open Expect_test_helpers_base
 open Hardcaml
-open! Hardcaml_verify
+open! Hardcaml_formal_verification
 
 (* The first thing we need to do is choose how we are going to represent the puzzle.
 

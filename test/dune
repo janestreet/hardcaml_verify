@@ -1,6 +1,6 @@
 (library
- (name hardcaml_verify_test)
- (libraries expect_test_helpers_base hardcaml hardcaml_verify
+ (name hardcaml_formal_verification_test)
+ (libraries expect_test_helpers_base hardcaml hardcaml_formal_verification
    hardcaml_waveterm jane_rope stdio)
  (preprocess
   (pps ppx_hardcaml ppx_jane)))

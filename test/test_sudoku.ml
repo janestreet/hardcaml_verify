@@ -5,7 +5,7 @@
 
 open Base
 open Stdio
-open Hardcaml_verify
+open Hardcaml_formal_verification
 open List.Let_syntax
 
 let labels = Label.create ~width:1000 "v"

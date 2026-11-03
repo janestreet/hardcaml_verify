@@ -8,11 +8,11 @@
 open Base
 module Uid : Uid.S
 
-type t [@@deriving compare ~localize, sexp]
+type t [@@deriving compare, sexp]
 
 val to_string : t -> string
 
-include%template Comparable.S [@mode local] with type t := t
+include Comparable.S with type t := t
 
 val create : ?width:int -> ?hidden:bool -> string -> t array
 val create1 : ?hidden:bool -> string -> t

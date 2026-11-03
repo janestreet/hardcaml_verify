@@ -28,11 +28,11 @@ module T = struct
         ; arg1 : t
         ; arg2 : t
         }
-  [@@deriving compare ~localize, sexp]
+  [@@deriving compare, sexp]
 end
 
 include T
-module%template Comparable = Comparable.Make [@mode local] (T)
+module Comparable = Comparable.Make (T)
 
 let optimise_muxs = false
 let constant_only = false

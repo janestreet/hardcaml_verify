@@ -1,6 +1,6 @@
 open Base
 open Expect_test_helpers_base
-open Hardcaml_verify
+open Hardcaml_formal_verification
 
 let a = Cnf.Literal.create "a" ~width:2
 let b = Cnf.Literal.create1 "b"
@@ -43,22 +43,23 @@ let%expect_test "z3" =
   [%expect {| (result (Ok Unsat)) |}]
 ;;
 
-(* let%expect_test "minisat" =
- *   let result = Solver.(solve ~solver:minisat cnf) in
- *   print_s [%message (result : Cnf.Model_with_vectors.input Solver.result)];
- *   [%expect
- *     {|
- *     (result (
- *       Ok (
- *         Sat (
- *           ((name a) (value 01))
- *           ((name b) (value 0)))))) |}];
- *   let result = Solver.(solve ~solver:minisat cnf_unsat) in
- *   print_s [%message (result : Cnf.Model_with_vectors.input Solver.result)];
- *   [%expect {| (result (Ok Unsat)) |}]
- * ;;
- *
- * let%expect_test "picosat" =
+let%expect_test "minisat" =
+  let result = Solver.(solve ~solver:minisat cnf) in
+  print_s [%message (result : Cnf.Model_with_vectors.input Solver.result)];
+  [%expect
+    {|
+    (result (
+      Ok (
+        Sat (
+          ((name a) (value 01))
+          ((name b) (value 0))))))
+    |}];
+  let result = Solver.(solve ~solver:minisat cnf_unsat) in
+  print_s [%message (result : Cnf.Model_with_vectors.input Solver.result)];
+  [%expect {| (result (Ok Unsat)) |}]
+;;
+
+(* let%expect_test "picosat" =
  *   let result = Solver.(solve ~solver:picosat cnf) in
  *   print_s [%message (result : Cnf.Model_with_vectors.input Solver.result)];
  *   [%expect

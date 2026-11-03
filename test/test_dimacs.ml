@@ -1,6 +1,6 @@
 open Base
 open Expect_test_helpers_base
-open Hardcaml_verify
+open Hardcaml_formal_verification
 
 let a = Cnf.Literal.create "a" ~width:2
 let b = Cnf.Literal.create1 "b"

@@ -1,6 +1,6 @@
 open! Base
 open! Expect_test_helpers_base
-open Hardcaml_verify
+open Hardcaml_formal_verification
 open Hardcaml
 open Hardcaml.Signal
 
@@ -28,10 +28,10 @@ let retimer () =
 ;;
 
 let print nusmv = Nusmv.to_rope nusmv |> Rope.to_string |> Stdio.Out_channel.print_string
-let create ~name ts = Nusmv.create ~name ~normalize_uids:true ts
+let create ~name ts = Nusmv.create ~name ts
 
 let%expect_test "retime" =
-  let nusmv = create ~name:"retime" [ LTL Property.LTL.(g (p (retimer ()))) ] in
+  let nusmv = create ~name:"retime" [ LTL Property.LTL.Formula.(g (p (retimer ()))) ] in
   print nusmv;
   [%expect
     {|
@@ -46,32 +46,32 @@ let%expect_test "retime" =
     -- registers
     VAR b0 : unsigned word [8];
     VAR a0 : unsigned word [8];
-    VAR _18 : unsigned word [8];
+    VAR _31 : unsigned word [8];
     VAR r0 : unsigned word [8];
     VAR r1 : unsigned word [8];
 
     -- combinatorial logic
-    DEFINE _17 := 0h8_00;
-    DEFINE _14 := 0h8_00;
-    DEFINE _12 := 0h8_00;
-    DEFINE _16 := a0 + b0;
-    DEFINE _10 := 0h8_00;
-    DEFINE _8 := 0h8_00;
-    DEFINE _7 := a + b;
-    DEFINE _19 := word1(r1 = _18);
-    DEFINE prop := _19;
+    DEFINE _30 := 0h8_00;
+    DEFINE _27 := 0h8_00;
+    DEFINE _25 := 0h8_00;
+    DEFINE _29 := a0 + b0;
+    DEFINE _35 := 0h8_00;
+    DEFINE _33 := 0h8_00;
+    DEFINE _32 := a + b;
+    DEFINE _37 := word1(r1 = _31);
+    DEFINE prop := _37;
 
     -- register updates
     ASSIGN init(b0) := 0h8_00;
-    ASSIGN next(b0) := (bool(clear)?_14:b);
+    ASSIGN next(b0) := (bool(clear)?_27:b);
     ASSIGN init(a0) := 0h8_00;
-    ASSIGN next(a0) := (bool(clear)?_12:a);
-    ASSIGN init(_18) := 0h8_00;
-    ASSIGN next(_18) := (bool(clear)?_17:_16);
+    ASSIGN next(a0) := (bool(clear)?_25:a);
+    ASSIGN init(_31) := 0h8_00;
+    ASSIGN next(_31) := (bool(clear)?_30:_29);
     ASSIGN init(r0) := 0h8_00;
-    ASSIGN next(r0) := (bool(clear)?_8:_7);
+    ASSIGN next(r0) := (bool(clear)?_33:_32);
     ASSIGN init(r1) := 0h8_00;
-    ASSIGN next(r1) := (bool(clear)?_10:r0);
+    ASSIGN next(r1) := (bool(clear)?_35:r0);
 
     -- outputs
     DEFINE __ap_prop := prop;
@@ -82,7 +82,7 @@ let%expect_test "retime" =
 ;;
 
 let%expect_test "register output == register input at previous cycle, if enabled" =
-  let module P = Property.LTL in
+  let module P = Property.LTL.Formula in
   let enable = input "enable" 1 in
   let d = input "d" 1 in
   let q = reg ~enable d in
@@ -102,15 +102,15 @@ let%expect_test "register output == register input at previous cycle, if enabled
     VAR clear : unsigned word [1];
 
     -- registers
-    VAR _11 : unsigned word [1];
+    VAR _43 : unsigned word [1];
 
     -- combinatorial logic
-    DEFINE _10 := 0h1_0;
-    DEFINE q := _11;
+    DEFINE _42 := 0h1_0;
+    DEFINE q := _43;
 
     -- register updates
-    ASSIGN init(_11) := 0h1_0;
-    ASSIGN next(_11) := (bool(clear)?_10:(bool(enable)?d:_11));
+    ASSIGN init(_43) := 0h1_0;
+    ASSIGN next(_43) := (bool(clear)?_42:(bool(enable)?d:_43));
 
     -- outputs
     DEFINE __ap_clear := clear;
@@ -129,7 +129,7 @@ let%expect_test "Due to circuit rewriting, internal signals get new uids. If the
                  create the clear/enable logic can not be done in hardcaml and doesn't \
                  need to be lifted into the temporal logic."
   =
-  let module P = Property.LTL in
+  let module P = Property.LTL.Formula in
   let enable = input "enable" 1 in
   let d = input "d" 1 in
   let q = reg ~enable d in
@@ -150,22 +150,22 @@ let%expect_test "Due to circuit rewriting, internal signals get new uids. If the
     VAR d : unsigned word [1];
 
     -- registers
-    VAR _12 : unsigned word [1];
+    VAR _52 : unsigned word [1];
 
     -- combinatorial logic
-    DEFINE _9 := !clear;
-    DEFINE _10 := _9 & enable;
-    DEFINE _11 := 0h1_0;
-    DEFINE q := _12;
+    DEFINE _54 := !clear;
+    DEFINE _55 := _54 & enable;
+    DEFINE _51 := 0h1_0;
+    DEFINE q := _52;
 
     -- register updates
-    ASSIGN init(_12) := 0h1_0;
-    ASSIGN next(_12) := (bool(clear)?_11:(bool(enable)?d:_12));
+    ASSIGN init(_52) := 0h1_0;
+    ASSIGN next(_52) := (bool(clear)?_51:(bool(enable)?d:_52));
 
     -- outputs
     DEFINE __ap_d := d;
     DEFINE __ap_q := q;
-    DEFINE __ap_1 := _10;
+    DEFINE __ap_1 := _55;
 
     -- SPECS
     LTLSPEC (G ((!bool(__ap_1)) | (!((bool(__ap_d) & (!(X bool(__ap_q)))) | ((!bool(__ap_d)) & (X bool(__ap_q)))))));
@@ -173,7 +173,7 @@ let%expect_test "Due to circuit rewriting, internal signals get new uids. If the
 ;;
 
 let%expect_test "muxs" =
-  let module P = Property.LTL in
+  let module P = Property.LTL.Formula in
   let sel = input "sel" 2 in
   let d = List.init 4 ~f:(fun i -> input [%string "d%{i#Int}"] 4) in
   let q = mux sel d in
@@ -194,20 +194,20 @@ let%expect_test "muxs" =
     -- registers
 
     -- combinatorial logic
-    DEFINE _8 := 0h4_0;
-    DEFINE _7 :=
+    DEFINE _65 := 0h4_0;
+    DEFINE _64 :=
       case
         sel=0h2_0: d0;
         sel=0h2_1: d1;
         sel=0h2_2: d2;
         TRUE: d3;
       esac;
-    DEFINE _9 := word1(_7 = _8);
+    DEFINE _66 := word1(_64 = _65);
 
     -- register updates
 
     -- outputs
-    DEFINE __ap_1 := _9;
+    DEFINE __ap_1 := _66;
 
     -- SPECS
     LTLSPEC (G bool(__ap_1));
@@ -215,7 +215,7 @@ let%expect_test "muxs" =
 ;;
 
 let%expect_test "cases" =
-  let module P = Property.LTL in
+  let module P = Property.LTL.Formula in
   let q =
     cases
       ~default:(input "default" 8)
@@ -252,8 +252,8 @@ let%expect_test "cases" =
     -- registers
 
     -- combinatorial logic
-    DEFINE _37 := 0h8_00;
-    DEFINE _36 :=
+    DEFINE _135 := 0h8_00;
+    DEFINE _134 :=
       case
         select=0h32_0bd44b2d: v0;
         select=0h32_3f664094: v1;
@@ -273,12 +273,12 @@ let%expect_test "cases" =
         select=0h32_98f8d4c3: v15;
         TRUE: default;
       esac;
-    DEFINE _38 := word1(_36 = _37);
+    DEFINE _136 := word1(_134 = _135);
 
     -- register updates
 
     -- outputs
-    DEFINE __ap_1 := _38;
+    DEFINE __ap_1 := _136;
 
     -- SPECS
     LTLSPEC (G bool(__ap_1));

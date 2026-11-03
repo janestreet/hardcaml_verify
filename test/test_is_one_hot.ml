@@ -1,5 +1,5 @@
 open Base
-open Hardcaml_verify
+open Hardcaml_formal_verification
 
 let print_is_proved ?(verbose = true) eqn =
   ignore (Solver.solve ~print_model:verbose Comb_gates.(cnf ~:eqn) : _ Or_error.t)

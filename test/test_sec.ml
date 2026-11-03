@@ -1,6 +1,6 @@
 open! Base
 open Hardcaml
-open Hardcaml_verify
+open Hardcaml_formal_verification
 open Expect_test_helpers_base
 open Signal
 

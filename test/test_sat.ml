@@ -1,6 +1,6 @@
 open! Base
 open Expect_test_helpers_base
-open Hardcaml_verify
+open Hardcaml_formal_verification
 open Comb_gates
 
 let%expect_test "single bit" =

@@ -1,15 +1,14 @@
 open Base
 open Expect_test_helpers_base
 open Hardcaml
-open Hardcaml_verify
+open Hardcaml_formal_verification
 
 module Delayed_adder = struct
   open Signal
 
   module I = struct
     type 'a t =
-      { clock : 'a
-      ; clear : 'a
+      { clocking : 'a Clocking.t
       ; foo : 'a [@bits 16]
       ; bar : 'a [@bits 16]
       }
@@ -21,7 +20,7 @@ module Delayed_adder = struct
   end
 
   let create (input : _ I.t) =
-    let spec_with_clear = Reg_spec.create ~clock:input.clock ~clear:input.clear () in
+    let spec_with_clear = Clocking.to_spec input.clocking in
     let foo_reg = reg spec_with_clear ~enable:vdd input.foo in
     let bar_reg = reg spec_with_clear ~enable:vdd input.bar in
     { O.baz = input.foo ^: input.bar ^: foo_reg ^: bar_reg }
@@ -76,8 +75,8 @@ let%expect_test "clear resets registers" =
   let inputs = Model.ltl model |> Nusmv.Circuit_properties.inputs in
   let outputs = Model.ltl model |> Nusmv.Circuit_properties.outputs in
   let properties =
-    let clear = inputs.clear.(0) in
-    let open Property.LTL in
+    let clear = inputs.clocking.clear.(0) in
+    let open Property.LTL.Formula in
     [ Nusmv.LTL (G (clear ==>: X (inputs.foo.(0) ^: inputs.bar.(0) ==: outputs.baz.(0))))
     ; Nusmv.LTL (G (clear ==>: X (inputs.foo.(0) ^: inputs.bar.(0) ==: outputs.baz.(0))))
     ]
@@ -91,16 +90,11 @@ let%expect_test "clear resets registers" =
 let%expect_test "example NuSMV failure trace" =
   let open Delayed_adder in
   let module Model = Nusmv.With_interface (I) (O) in
-  let model =
-    Model.create
-      ~name:"delayed_adder"
-      ~normalize_uids:true (* Ensure that printed signal UIDs are stable *)
-      Delayed_adder.create
-  in
+  let model = Model.create ~name:"delayed_adder" Delayed_adder.create in
   let inputs = Model.ltl model |> Nusmv.Circuit_properties.inputs in
   let outputs = Model.ltl model |> Nusmv.Circuit_properties.outputs in
   let properties =
-    let open Property.LTL in
+    let open Property.LTL.Formula in
     [ Nusmv.LTL (inputs.foo.(0) ==: inputs.bar.(0))
     ; Nusmv.LTL (inputs.foo.(0) ==: outputs.baz.(0))
     ]
@@ -112,64 +106,68 @@ let%expect_test "example NuSMV failure trace" =
     match proof with
     | Nusmv.Proof_result.Tautology -> Stdio.print_endline "Tautology"
     | Nusmv.Proof_result.Exists_counter_example cet ->
-      let waveform = Nusmv.Counter_example_trace.to_waveform model cet in
-      Hardcaml_waveterm.Waveform.expect waveform);
+      let waveform = Nusmv.to_waveform model cet in
+      Hardcaml_waveterm.Waveform.expect ~wave_scale:7 waveform);
   [%expect
     {|
     (proofs
      ((Exists_counter_example
        ((states
          (((clear 0) (clock 0) (bar 0000000000000001) (foo 0000000000000000)
-           (_16 0000000000000000) (_14 0000000000000000) (_15 0000000000000000)
-           (_13 0000000000000000) (_2 0) (_4 0) (_17 0000000000000000)
-           (_5 0000000000000001) (_18 0000000000000001) (_6 0000000000000000)
-           (_19 0000000000000001) (_20 1) (_21 1) (_22 0) (baz 0000000000000001))
-          ((clear 1) (bar 0000000000000000) (_16 0000000000000001) (_2 1)
-           (_17 0000000000000001) (_5 0000000000000000) (_21 0))
-          ((clear 0) (bar 0000000000000001) (_16 0000000000000000) (_2 0)
-           (_17 0000000000000000) (_5 0000000000000001) (_21 1))))))
+           (_150 0000000000000000) (_148 0000000000000000)
+           (_149 0000000000000000) (_147 0000000000000000) (_144 0) (_143 0)
+           (_151 0000000000000000) (_146 0000000000000001)
+           (_152 0000000000000001) (_145 0000000000000000)
+           (_153 0000000000000001) (_218 1) (_202 1) (_186 0)
+           (baz 0000000000000001))
+          ((clear 1) (bar 0000000000000000) (_150 0000000000000001) (_144 1)
+           (_151 0000000000000001) (_146 0000000000000000) (_202 0))
+          ((clear 0) (bar 0000000000000001) (_150 0000000000000000) (_144 0)
+           (_151 0000000000000000) (_146 0000000000000001) (_202 1))))))
       (Exists_counter_example
        ((states
          (((clear 0) (clock 0) (bar 0000000000000001) (foo 0000000000000000)
-           (_16 0000000000000000) (_14 0000000000000000) (_15 0000000000000000)
-           (_13 0000000000000000) (_2 0) (_4 0) (_17 0000000000000000)
-           (_5 0000000000000001) (_18 0000000000000001) (_6 0000000000000000)
-           (_19 0000000000000001) (_20 1) (_21 1) (_22 0) (baz 0000000000000001))
-          ((clear 1) (bar 0000000000000000) (_16 0000000000000001) (_2 1)
-           (_17 0000000000000001) (_5 0000000000000000) (_21 0))
-          ((clear 0) (bar 0000000000000001) (_16 0000000000000000) (_2 0)
-           (_17 0000000000000000) (_5 0000000000000001) (_21 1))))))))
+           (_150 0000000000000000) (_148 0000000000000000)
+           (_149 0000000000000000) (_147 0000000000000000) (_144 0) (_143 0)
+           (_151 0000000000000000) (_146 0000000000000001)
+           (_152 0000000000000001) (_145 0000000000000000)
+           (_153 0000000000000001) (_218 1) (_202 1) (_186 0)
+           (baz 0000000000000001))
+          ((clear 1) (bar 0000000000000000) (_150 0000000000000001) (_144 1)
+           (_151 0000000000000001) (_146 0000000000000000) (_202 0))
+          ((clear 0) (bar 0000000000000001) (_150 0000000000000000) (_144 0)
+           (_151 0000000000000000) (_146 0000000000000001) (_202 1))))))))
     ┌Signals────────┐┌Waves──────────────────────────────────────────────┐
     │clock          ││                                                   │
-    │               ││────────────────────────                           │
-    │clear          ││        ┌───────┐                                  │
-    │               ││────────┘       └───────                           │
-    │               ││────────┬───────┬───────                           │
-    │bar            ││ 0001   │0000   │0001                              │
-    │               ││────────┴───────┴───────                           │
-    │               ││────────────────────────                           │
+    │               ││────────────────────────────────────────────────   │
+    │clear          ││                ┌───────────────┐                  │
+    │               ││────────────────┘               └───────────────   │
+    │               ││────────────────┬───────────────┬───────────────   │
+    │bar            ││ 0001           │0000           │0001              │
+    │               ││────────────────┴───────────────┴───────────────   │
+    │               ││────────────────────────────────────────────────   │
     │foo            ││ 0000                                              │
-    │               ││────────────────────────                           │
-    │               ││────────────────────────                           │
+    │               ││────────────────────────────────────────────────   │
+    │               ││────────────────────────────────────────────────   │
     │baz            ││ 0001                                              │
-    │               ││────────────────────────                           │
+    │               ││────────────────────────────────────────────────   │
     └───────────────┘└───────────────────────────────────────────────────┘
-    b6de3882028ace1cf6833ac46d4bebd7
+    9806f319ff55a34b323dd0c3f7799074
     ┌Signals────────┐┌Waves──────────────────────────────────────────────┐
     │clock          ││                                                   │
-    │               ││────────────────────────                           │
-    │clear          ││        ┌───────┐                                  │
-    │               ││────────┘       └───────                           │
-    │               ││────────┬───────┬───────                           │
-    │bar            ││ 0001   │0000   │0001                              │
-    │               ││────────┴───────┴───────                           │
-    │               ││────────────────────────                           │
+    │               ││────────────────────────────────────────────────   │
+    │clear          ││                ┌───────────────┐                  │
+    │               ││────────────────┘               └───────────────   │
+    │               ││────────────────┬───────────────┬───────────────   │
+    │bar            ││ 0001           │0000           │0001              │
+    │               ││────────────────┴───────────────┴───────────────   │
+    │               ││────────────────────────────────────────────────   │
     │foo            ││ 0000                                              │
-    │               ││────────────────────────                           │
-    │               ││────────────────────────                           │
+    │               ││────────────────────────────────────────────────   │
+    │               ││────────────────────────────────────────────────   │
     │baz            ││ 0001                                              │
-    │               ││────────────────────────                           │
+    │               ││────────────────────────────────────────────────   │
     └───────────────┘└───────────────────────────────────────────────────┘
-    b6de3882028ace1cf6833ac46d4bebd7
+    9806f319ff55a34b323dd0c3f7799074
     |}]
 ;;
